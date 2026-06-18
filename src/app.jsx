@@ -344,10 +344,12 @@ const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
           ========================================= */}
       <main className="main-content">
         {/* FORMAL WELCOME HERO */}
-        <div className="hero-section">
-          <h1>Welcome to my Engineering Portfolio.</h1>
-          <p>I am <strong>Venkata Pavan Kumar</strong>, a Systems Architect specialized in high-performance backend infrastructure.</p>
-        </div>
+       
+<div className="hero-section">
+  <h1>Welcome to my Engineering Portfolio.</h1>
+  {/* Add Amarthaluri right here */}
+  <p>I am <strong>Venkata Pavan Kumar Amarthaluri</strong>, a Systems Architect specialized in high-performance backend infrastructure.</p>
+</div>
 
         {/* SCROLLING TICKER */}
         {showBanner && (
