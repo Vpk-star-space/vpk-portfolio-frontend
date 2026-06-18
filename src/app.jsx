@@ -545,11 +545,7 @@ export function ArticleView() {
     e.preventDefault();
     if (!commentText.trim()) return;
     setIsSubmitting(true);
-    // SEO Helper Logic
-  const cleanDescription = article?.content 
-    ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) 
-    : "Read this article on my portfolio.";
-    
+
     try {
 const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
         method: 'POST',
@@ -565,8 +561,16 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
     setIsSubmitting(false);
   };
 
+  // 1. ADD THESE TWO LINES HERE
+const cleanDescription = article?.content 
+    ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) 
+    : "Read this article on my portfolio.";
+
+const currentUrl = `https://venkatapavankumar.vercel.app/article/${slug}`;
+
   if (!article) return <div style={{ color: '#8696a0', textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', fontWeight: 'bold' }}>Booting infrastructure...</div>;
 
+  
   return (
   <div className="article-page-wrapper">
       <Helmet>
