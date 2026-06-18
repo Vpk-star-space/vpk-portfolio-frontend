@@ -522,6 +522,7 @@ export function ArticleView() {
 
   useEffect(() => {
   fetch(`${BACKEND_URL}/api/articles/${slug}`)
+  
       .then(res => res.json())
       .then(data => setArticle(data))
       .catch(err => console.error(err));
@@ -544,6 +545,10 @@ export function ArticleView() {
     e.preventDefault();
     if (!commentText.trim()) return;
     setIsSubmitting(true);
+    // SEO Helper Logic
+  const cleanDescription = article?.content 
+    ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) 
+    : "Read this article on my portfolio.";
     
     try {
 const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
@@ -563,12 +568,24 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
   if (!article) return <div style={{ color: '#8696a0', textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', fontWeight: 'bold' }}>Booting infrastructure...</div>;
 
   return (
-    <div className="article-page-wrapper">
+  <div className="article-page-wrapper">
       <Helmet>
+        {/* Basic SEO */}
         <title>{article.title} | Venkata Pavan Kumar</title>
-        <meta name="description" content={article.content.substring(0, 150)} />
+        <meta name="description" content={cleanDescription} />
+        <link rel="canonical" href={currentUrl} />
+
+        {/* Open Graph (Social Sharing for WhatsApp/Facebook/LinkedIn) */}
+        <meta property="og:title" content={`${article.title} | Venkata Pavan Kumar`} />
+        <meta property="og:description" content={cleanDescription} />
+        <meta property="og:url" content={currentUrl} />
+        <meta property="og:type" content="article" />
+        
+        {/* Twitter/X Cards */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={cleanDescription} />
       </Helmet>
-      
       <nav className="article-nav">
         <button onClick={() => navigate('/')} className="back-btn">← Back to Portfolio</button>
       </nav>
@@ -825,8 +842,9 @@ export function AdminDashboard() {
             </form>
           </div>
         ) : (
-          activeRoom ? (
+              activeRoom ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* CHAT WINDOW HEADER */}
               <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div className="avatar" style={{ width: '45px', height: '45px', background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,1)', color: '#0f172a' }}>👤</div>
@@ -835,9 +853,26 @@ export function AdminDashboard() {
                     <span style={{ fontSize: '0.85rem', color: '#00a884', fontWeight: 'bold' }}>Online</span>
                   </div>
                 </div>
-                <button onClick={() => closeConversation(activeRoom)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: '800' }}>Close Chat</button>
+                
+                {/* CLOSE CHAT BUTTON (Closes view, does NOT delete data) */}
+                <button 
+                  onClick={() => setActiveRoom(null)} 
+                  style={{ 
+                    background: 'rgba(239,68,68,0.1)', 
+                    border: '1px solid rgba(239,68,68,0.3)', 
+                    color: '#ef4444', 
+                    padding: '8px 16px', 
+                    borderRadius: '20px', 
+                    cursor: 'pointer', 
+                    fontWeight: '800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  ✕ Close Chat
+                </button>
               </div>
-              
               <div className="chat-window" style={{ flex: 1, padding: '30px 10%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                 <div style={{ textAlign: 'center', margin: '15px 0' }}>
                   <span style={{ background: 'rgba(255,255,255,0.8)', color: '#475569', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,1)' }}>
