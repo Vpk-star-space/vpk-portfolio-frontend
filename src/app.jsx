@@ -58,6 +58,8 @@ export function ArchitectPortfolio() {
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
   const [showBootOverlay, setShowBootOverlay] = useState(false);
+  // Add this line with your other useRef hooks
+const aiResponseRef = useRef(null);
 
   const prevLengthRef = useRef(0);
 
@@ -170,7 +172,7 @@ export function ArchitectPortfolio() {
     };
   }, [visitorId]);
 
-  const handleAiSubmit = async (e) => {
+const handleAiSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
@@ -190,6 +192,12 @@ export function ArchitectPortfolio() {
       const data = await response.json();
       if(response.ok) {
         setAiResponse(data.response);
+        // --- UPGRADE: Auto-scroll for BOTH laptop and mobile ---
+        setTimeout(() => {
+          if (aiResponseRef.current) {
+            aiResponseRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 300);
       } else {
         setAiResponse('### ⚠️ System Alert\n**AI Agent unreachable.**');
       }
@@ -379,10 +387,18 @@ export function ArchitectPortfolio() {
             />
           </form>
         </nav>
-
-        {isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#3b82f6', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
+{isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#3b82f6', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
         {aiResponse && !isAiLoading && (
-          <div className="ai-response-window" style={{ margin: '0 auto 30px auto', maxWidth: '1300px', width: '96%' }}>
+          <div 
+            ref={aiResponseRef} 
+            className="ai-response-window" 
+            style={{ 
+              margin: '0 auto 30px auto', 
+              maxWidth: '1300px', 
+              width: '96%',
+              scrollMarginTop: '100px' /* This forces the jump to clear the sticky header */
+            }}
+          >
             <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
               <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 Gemini Agent Output
