@@ -475,14 +475,23 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 @media (max-width: 1024px) {
   .mobile-menu-btn { display: flex !important; }
   
-  /* UPGRADED: Force Search Bar to top on mobile and hide links */
+  /* FIXED: Show links and search bar stacked in the glass nav */
   .top-nav-glass { 
     display: flex !important; 
-    padding: 10px 15px !important;
-    margin: 85px auto 20px auto !important; /* Pushed below floating buttons */
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 15px !important;
+    margin: 85px auto 20px auto !important; /* Clears floating buttons */
     width: 90% !important;
   }
-  .top-nav-links { display: none !important; } 
+  .top-nav-links { 
+    display: flex !important; /* Restored! */
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+  } 
+  .top-nav-link { font-size: 0.9rem !important; }
   .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
 
   .mobile-nav-menu { display: flex !important; } 
@@ -509,7 +518,7 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
   .main-content {
     margin-left: 0 !important;
-    padding: 0px 16px 20px 16px !important; /* Search bar acts as spacer now */
+    padding: 0px 16px 20px 16px !important;
     width: 100% !important;
     max-width: 100% !important;
   }
