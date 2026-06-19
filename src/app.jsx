@@ -215,6 +215,9 @@ export function ArchitectPortfolio() {
   
   return (
     <div className="dashboard-layout">
+      {/* =========================================
+          GLOBAL INLINE STYLES FOR COMPONENTS
+          ========================================= */}
       <style dangerouslySetInnerHTML={{ __html: `
         .wa-widget { position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid rgba(255,255,255,0.1); background: #050a15; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: rgba(255, 255, 255, 0.03); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 6px; }
@@ -260,6 +263,30 @@ export function ArchitectPortfolio() {
           border-color: #3b82f6;
           transform: scale(1.05);
         }
+
+        /* UPGRADED: Keep ALL Navigation & Search visible at the top on Mobile */
+        @media (max-width: 1024px) {
+          .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
+          
+          /* Show links and search, stacked neatly for mobile screens */
+          .top-nav-glass { 
+            display: flex !important; 
+            flex-direction: column !important;
+            gap: 15px !important;
+            padding: 15px !important;
+            margin: 75px auto 20px auto !important; 
+            width: 90% !important;
+          }
+          .top-nav-links { 
+            display: flex !important; 
+            width: 100% !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            gap: 15px !important;
+          } 
+          .top-nav-link { font-size: 0.85rem !important; }
+          .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
+        }
       `}} />
 
       {showBootOverlay && (
@@ -294,7 +321,7 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
-      {/* UPGRADE: Hide controls if chat is expanded so they don't cover the close button */}
+      {/* Hide controls if chat is expanded so they don't cover the close button */}
       {!isChatExpanded && (
         <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
@@ -314,13 +341,7 @@ export function ArchitectPortfolio() {
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
 
-        {/* Removed Mobile Search Form from here as it now lives properly in the top navigation */}
-        <div className="mobile-nav-menu">
-          <div className="section-title">Navigation</div>
-          <a href="#projects" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>🚀</span> Live Links</a>
-          <a href="#articles" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>📝</span> Articles</a>
-          <a href="#contact" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>💬</span> Get in Touch</a>
-        </div>
+        {/* The redundant mobile links are removed from here. Only Profile details remain. */}
 
         <div className="section-title">Technical Arsenal</div>
         <div className="skill-tags">
