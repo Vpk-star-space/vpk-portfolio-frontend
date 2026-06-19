@@ -1,28 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 html {
-  scroll-behavior: smooth; /* UPGRADE: Smooth jumping for nav links */
+  scroll-behavior: smooth; 
 }
 
 /* ==========================================
    APPLE VISION-OS: CORE PHYSICS & WATER-GLASS
    ========================================== */
 :root {
-  /* Apple Signature Spring Motion */
   --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
   --spring-duration: 0.5s;
   
-  /* Pure Water-Glass Morphic Filters (UPGRADED for Apple Feel) */
   --glass-blur-base: blur(30px) saturate(200%);
   --glass-blur-hover: blur(40px) saturate(220%);
   
-  /* Light Theme Glass Optics */
   --glass-bg-light: rgba(255, 255, 255, 0.35);
   --glass-bg-hover-light: rgba(255, 255, 255, 0.5);
   --glass-border-light: 1px solid rgba(255, 255, 255, 0.6);
   --glass-border-hover-light: 1px solid rgba(255, 255, 255, 0.95);
   
-  /* 3D Depth Shadow Physics (UPGRADED: Apple Specular Highlight & Ambient Shadow) */
   --glass-shadow-light: 0 12px 32px rgba(15, 23, 42, 0.08), 
                         inset 0 1px 1px rgba(255, 255, 255, 0.8), 
                         inset 0 -1px 1px rgba(255, 255, 255, 0.2);
@@ -30,7 +26,6 @@ html {
                               inset 0 2px 2px rgba(255, 255, 255, 1),
                               inset 0 -1px 2px rgba(255, 255, 255, 0.3);
 
-  /* Dark Theme Glass Optics (Deep Space-Gray) */
   --glass-bg-dark: rgba(15, 23, 42, 0.45);
   --glass-bg-hover-dark: rgba(30, 41, 59, 0.6);
   --glass-border-dark: 1px solid rgba(255, 255, 255, 0.15);
@@ -42,7 +37,7 @@ html {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* ==========================================
-   DYNAMIC LIGHT AQUA/BLUE CANVAS (KEPT EXACTLY AS YOU BUILT IT)
+   DYNAMIC LIGHT AQUA/BLUE CANVAS
    ========================================== */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -50,10 +45,8 @@ body {
   overflow-x: hidden;
   transition: background-color 0.8s ease, color 0.8s ease;
   
-  /* Soft Ice Blue Base */
   background-color: #e0f2fe;
   
-  /* 4 Fixed Radial Gradients */
   background-image: 
     radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.35) 0%, transparent 50%),
     radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.25) 0%, transparent 50%),
@@ -64,7 +57,7 @@ body {
   background-size: 100vw 100vh;
 }
 
-.dashboard-layout { display: flex; min-height: 100vh; flex-direction: column; } /* UPGRADE: Flex-col to allow top nav */
+.dashboard-layout { display: flex; min-height: 100vh; flex-direction: column; } 
 
 /* =========================
    SCROLLBARS
@@ -81,7 +74,7 @@ body {
 @keyframes serverPulse { 0%, 100% { text-shadow: 0 0 0px rgba(56, 189, 248, 0); } 50% { text-shadow: 0 0 12px rgba(56, 189, 248, 0.6); } }
 
 /* ==========================================
-   UPGRADE: TOP NAVIGATION & GLASS SEARCH BAR
+   TOP NAVIGATION & GLASS SEARCH BAR
    ========================================== */
 .top-nav-glass {
   position: sticky;
@@ -151,7 +144,6 @@ body {
 }
 .top-search-icon { color: #3b82f6; margin-right: 10px; font-weight: bold; }
 
-/* UPGRADE: Sidebar Mobile Menu Navigation */
 .mobile-nav-menu { display: none; flex-direction: column; gap: 15px; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid rgba(0,0,0,0.1); }
 
 /* ==========================================
@@ -166,7 +158,7 @@ body {
   padding: 40px 25px;
   position: fixed; left: 0; top: 0; height: 100vh; overflow-y: auto;
   box-shadow: var(--glass-shadow-light); 
-  z-index: 100; /* FIXED: Default lower z-index */
+  z-index: 100;
   transition: transform var(--spring-duration) var(--spring-easing), left var(--spring-duration) var(--spring-easing);
   animation: fadeIn 0.8s var(--spring-easing);
 }
@@ -185,7 +177,6 @@ body {
 .sidebar .title { color: #475569; line-height: 1.5; margin-bottom: 30px; font-size: 0.9rem; font-weight: 800; }
 .section-title { font-size: .70rem; text-transform: uppercase; letter-spacing: 2px; color: #475569; font-weight: 900; margin-bottom: 15px; margin-top: 25px; }
 
-/* UPGRADE: Technical Arsenal Tags (Padding, border, and hover effect) */
 .skill-tags { display: flex; flex-wrap: wrap; gap: 10px; }
 .skill-tag {
   background: rgba(255, 255, 255, 0.7); 
@@ -206,7 +197,6 @@ body {
   box-shadow: 0 6px 15px rgba(59, 130, 246, 0.15);
 }
 
-/* SPRING HOVER ON SOCIAL LINKS */
 .social-links { display: flex; flex-direction: column; gap: 10px; }
 .social-link {
   text-decoration: none; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px);
@@ -223,7 +213,6 @@ body {
 }
 .link-linkedin { color: #0a66c2; } .link-github { color: #0f172a; } .link-mail { color: #b91c1c; }
 
-/* UPGRADE: Spacing for Hero section so ticker doesn't overlap */
 .hero-section {
   margin-bottom: 40px; 
 }
@@ -239,7 +228,7 @@ body {
 }
 .scrolling-text { 
   display: inline-block; color: #3b82f6; font-weight: 800; font-size: 0.95rem; letter-spacing: 2px; 
-  animation: dynamicMarquee 25s linear infinite; /* UPGRADE: Animated */
+  animation: dynamicMarquee 25s linear infinite; 
 }
 
 @keyframes dynamicMarquee {
@@ -253,7 +242,6 @@ body {
 .projects-container { margin-bottom: 10px; }
 .main-heading { font-size: 2rem; margin-bottom: 25px; color: #0f172a; font-weight: 900; letter-spacing: -0.5px; }
 
-/* UPGRADE: Flex Grid for equal height cards */
 .projects-grid { 
   display: grid; 
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
@@ -262,7 +250,6 @@ body {
   align-items: stretch;
 }
 
-/* THE VISION-OS HOVER CARD LOGIC (SPRING EASING) */
 .project-card, .dash-card, .article-preview-line, .wa-widget, .write-article-container, .dev-article-container {
   background: var(--glass-bg-light);
   backdrop-filter: var(--glass-blur-base); 
@@ -271,21 +258,18 @@ body {
   border-radius: 32px; 
   padding: 35px; 
   text-decoration: none; 
-  /* EXACT APPLE SPRING PHYSICS HOOK */
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
               box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
               background-color 0.3s ease !important;
   box-shadow: var(--glass-shadow-light);
 }
 
-/* UPGRADE: Project card inner flexbox to push metrics to bottom */
 .project-card {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-/* Organic Micro-Interactions: Lift, Scale, Blur Deepen, Shadow Expand */
 .project-card:hover, .dash-card:hover, .article-preview-line:hover { 
   transform: translateY(-6px) scale(1.015) !important;
   background: var(--glass-bg-hover-light);
@@ -298,7 +282,6 @@ body {
 .project-card h3 { font-size: 1.3rem; margin-bottom: 10px; font-weight: 900; }
 .project-card p { font-weight: 600; line-height: 1.6; flex-grow: 1; }
 
-/* UPGRADE: Project Metrics Badge styling */
 .project-metrics {
   margin-top: 20px;
   padding: 8px 12px;
@@ -316,7 +299,7 @@ body {
 .card-green { background: linear-gradient(135deg, rgba(209, 250, 229, 0.45), rgba(255, 255, 255, 0.25)); } .card-green h3 { color: #065f46; } .card-green p { color: #10b981; } .card-green .project-metrics { color: #065f46; }
 
 /* =========================
-   PREMIUM DASHBOARD AI CARD (Moved functionality to top in App.jsx, kept styling here)
+   PREMIUM DASHBOARD AI CARD 
 ========================= */
 .ai-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; background: rgba(255, 255, 255, 0.95); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.3); padding: 6px 14px; border-radius: 999px; margin-left: 15px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15); }
 .gemini-icon { width: 12px; height: 12px; fill: #6366f1; }
@@ -325,7 +308,6 @@ body {
 
 .dash-card h2 { font-size: 1.4rem; font-weight: 900; color: #0f172a; margin-bottom: 25px; display: flex; align-items: center; }
 
-/* AI Intelligence Tint */
 .section-purple { background: rgba(233, 213, 255, 0.4); margin-top: 30px; margin-bottom: 40px; }
 .section-purple h2 { color: #4c1d95; margin-top: 0; display: flex; align-items: center; gap: 15px; }
 
@@ -358,14 +340,7 @@ body {
 .article-page-wrapper { background: transparent; min-height: 100vh; color: #0f172a; padding-bottom: 60px; display: flex; flex-direction: column; align-items: center; width: 100%;}
 .article-nav { max-width: 800px; width: 100%; margin: 0 auto; padding: 20px 0; }
 .back-btn { background: var(--glass-bg-light); backdrop-filter: var(--glass-blur-base); color: #0f172a; border: var(--glass-border-light); font-size: 1rem; cursor: pointer; font-weight: 800; padding: 10px 20px; border-radius: 20px; }
-
-/* Forces standard readable width */
-.dev-article-container { 
-  max-width: 800px !important; 
-  margin: 0 auto !important;
-  width: 100%;
-}
-
+.dev-article-container { max-width: 800px !important; margin: 0 auto !important; width: 100%; }
 .article-main-title { font-size: 3.5rem; font-weight: 900; line-height: 1.15; margin-bottom: 25px; color: #000000; letter-spacing: -1.5px;}
 .author-card { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; padding-bottom: 0; border-bottom: none; }
 .author-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid white;}
@@ -422,7 +397,6 @@ body {
   z-index: 999999 !important; /* FIXED: Elevated above mobile menu */
 }
 
-/* Base UI Button - Inherits VisionOS spring easing */
 .ui-btn, .mobile-menu-btn {
   width: 45px !important;
   height: 45px !important;
@@ -439,34 +413,30 @@ body {
   border: none !important;
 }
 
-/* Light Theme Variables */
 body:not(.dark-theme) .ui-btn, body:not(.dark-theme) .mobile-menu-btn {
   background: rgba(255, 255, 255, 0.75) !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   color: #0f172a !important;
 }
 
-/* Dark Theme Variables */
 body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
   background: rgba(30, 41, 59, 0.8) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   color: #f8fafc !important;
 }
 
-/* Hover Interaction using Apple scale mechanics */
 .ui-btn:hover, .mobile-menu-btn:hover {
   transform: scale(1.08) !important;
   box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
 }
 
-/* Desktop Safeguard: Completely hide hamburger button layout on big screens */
 .mobile-menu-btn { display: none !important; }
 
 /* ==========================================
    TYPEWRITER ANIMATION (Cut-off Bug Fix)
    ========================================== */
 .sidebar .title {
-  font-size: 0.75rem !important; /* Shrunk to 12px to guarantee fit on all screens */
+  font-size: 0.75rem !important;
   font-weight: 700 !important;
   color: #475569;
   letter-spacing: 0px;
@@ -482,23 +452,13 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
   max-width: 0;
 }
 
-@keyframes typing { 
-  from { max-width: 0; } 
-  to { max-width: 100%; } 
-}
+@keyframes typing { from { max-width: 0; } to { max-width: 100%; } }
+@keyframes blink-caret { from, to { border-color: transparent; } 50% { border-color: #3b82f6; } }
 
-@keyframes blink-caret { 
-  from, to { border-color: transparent; } 
-  50% { border-color: #3b82f6; } 
-}
-
-/* ==========================================
-   TYPEWRITER RESPONSIVE FIX (Mobile Safety)
-   ========================================== */
 @media (max-width: 768px) {
   .sidebar .title {
     white-space: normal !important;
-    font-size: 0.85rem !important; /* Can be slightly bigger on mobile since it wraps */
+    font-size: 0.85rem !important;
   }
   .typewriter-text {
     white-space: normal !important;
@@ -506,41 +466,51 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     animation: none !important;
     max-width: 100% !important;
   }
-  .scrolling-text { animation-duration: 12s !important; } /* UPGRADE: Mobile speed fix */
+  .scrolling-text { animation-duration: 12s !important; } 
 }
 
 /* ==========================================
-   MOBILE LAYOUT DRAWING SYSTEM
+   MOBILE LAYOUT DRAWING SYSTEM (FIXED)
    ========================================== */
 @media (max-width: 1024px) {
-  /* Bug Fix: Safely targets the mobile button to show it on small screens */
   .mobile-menu-btn { display: flex !important; }
-  .top-nav-glass { display: none !important; } /* Hide top nav on mobile */
-  .mobile-nav-menu { display: flex !important; } /* Show sidebar nav on mobile */
+  
+  /* FIXED: Search bar is now visible on mobile, just the links are hidden */
+  .top-nav-glass { 
+    display: flex !important; 
+    padding: 10px 15px !important;
+    margin: 0 auto 20px auto !important;
+  }
+  .top-nav-links { display: none !important; } 
+  .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
+
+  .mobile-nav-menu { display: flex !important; } 
 
   .dashboard-layout { display: flex; flex-direction: column; width: 100%; overflow-x: hidden; }
 
-  /* The Sliding Drawer Shell */
+  /* FIXED: Sidebar height and scroll padding so Email link isn't stuck */
   .sidebar {
     position: fixed !important;
     left: -340px !important;
     top: 0 !important;
     width: 320px !important;
+    max-width: 85vw !important;
     height: 100vh !important;
+    height: 100dvh !important; 
     border-radius: 0 !important;
-    z-index: 9999 !important; /* FIXED: Sits under the floating controls */
+    z-index: 9999 !important; 
     transition: left 0.35s var(--spring-easing) !important;
     overflow-y: auto !important;
-    padding-top: 90px !important; /* FIXED: Added space so UI controls don't block profile img */
+    padding-top: 25px !important; 
+    padding-bottom: 120px !important; 
   }
 
-  /* Target dynamic transition entry hook */
-  .sidebar.mobile-open { left: 0 !important; box-shadow: 25px 0 60px rgba(0, 0, 0, 0.3) !important; }
+  .sidebar.mobile-open { left: 0 !important; box-shadow: 25px 0 60px rgba(0, 0, 0, 0.6) !important; }
 
-  /* Main viewport clearance layout spacing */
+  /* FIXED: Pushed content down so floating buttons don't block the Hero text */
   .main-content {
     margin-left: 0 !important;
-    padding: 20px 16px 20px 16px !important;
+    padding: 85px 16px 20px 16px !important; 
     width: 100% !important;
     max-width: 100% !important;
   }
@@ -553,8 +523,6 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 /* ==========================================
    🌑 MESH GRADIENT DARK MODE OVERRIDE 🌑
    ========================================== */
-
-/* Abstract Mesh Gradient Background Animation */
 @keyframes dark-mesh-flow {
   0% { background-position: 0% 0%; }
   50% { background-position: 100% 100%; }
@@ -563,7 +531,6 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
 body.dark-theme {
   background-color: #050c21 !important;
-  /* Prompt 1: Deep midnight navy, royal sapphire, soft lavender mist, emerald teal */
   background-image: 
     radial-gradient(circle at 10% 20%, rgba(5, 12, 33, 1) 0%, transparent 50%), 
     radial-gradient(circle at 80% 30%, rgba(13, 27, 72, 1) 0%, transparent 50%), 
@@ -575,8 +542,7 @@ body.dark-theme {
   color: #f8fafc !important;
 }
 
-/* Darken all the Liquid Glass Containers to Premium Frosted Dark Glass */
-body.dark-theme .top-nav-glass, /* UPGRADE: Added dark mode to Top Nav */
+body.dark-theme .top-nav-glass, 
 body.dark-theme .sidebar,
 body.dark-theme .dash-card,
 body.dark-theme .dev-article-container,
@@ -594,7 +560,6 @@ body.dark-theme .scrolling-ticker {
   box-shadow: var(--glass-shadow-dark) !important;
 }
 
-/* Dark Mode Card Hover States */
 body.dark-theme .project-card:hover, 
 body.dark-theme .dash-card:hover, 
 body.dark-theme .article-preview-line:hover {
@@ -605,12 +570,11 @@ body.dark-theme .article-preview-line:hover {
   box-shadow: var(--glass-shadow-hover-dark) !important;
 }
 
-/* Convert all Text to White / Light Gray */
 body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, 
 body.dark-theme .main-heading, body.dark-theme .article-title, 
 body.dark-theme .md-h1, body.dark-theme .md-h2, body.dark-theme .md-h3,
 body.dark-theme .wa-header-text h3,
-body.dark-theme .top-nav-link /* UPGRADE: Added dark mode to Top Nav Links */ {
+body.dark-theme .top-nav-link {
   color: #ffffff !important;
 }
 
@@ -619,7 +583,6 @@ body.dark-theme .md-p, body.dark-theme .md-li, body.dark-theme .title {
   color: #cbd5e1 !important;
 }
 
-/* Dark Mode Social Links & Tags */
 body.dark-theme .social-link, body.dark-theme .read-more {
   background: rgba(255,255,255,0.05) !important;
   border-color: rgba(255,255,255,0.1) !important;
@@ -629,15 +592,13 @@ body.dark-theme .social-link:hover, body.dark-theme .read-more:hover {
   background: rgba(255,255,255,0.15) !important; 
 }
 
-/* Dark mode specific for the new skill tags */
 body.dark-theme .skill-tag {
   background: rgba(59, 130, 246, 0.1) !important;
   border-color: rgba(59, 130, 246, 0.3) !important;
   color: #e0f2fe !important;
 }
 
-/* Dark Mode Inputs */
-body.dark-theme .top-search-wrapper /* UPGRADE: Search */ { background: rgba(0,0,0,0.3) !important; border-color: rgba(255,255,255,0.1) !important; }
+body.dark-theme .top-search-wrapper { background: rgba(0,0,0,0.3) !important; border-color: rgba(255,255,255,0.1) !important; }
 body.dark-theme .top-search-input { color: white !important; }
 body.dark-theme .dash-input, body.dark-theme .wa-input, 
 body.dark-theme .admin-input-content, body.dark-theme .admin-input-title {
@@ -646,13 +607,11 @@ body.dark-theme .admin-input-content, body.dark-theme .admin-input-title {
   border-color: rgba(255,255,255,0.1) !important;
 }
 
-/* Dark Mode Chat Bubbles */
 body.dark-theme .wa-received { background: rgba(30, 41, 59, 0.8) !important; color: #f8fafc !important; border-color: rgba(255,255,255,0.05) !important;}
 body.dark-theme .wa-sent { background: #3b82f6 !important; color: white !important; }
 body.dark-theme .wa-header { background: rgba(15, 23, 42, 0.6) !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
 body.dark-theme .wa-footer { background: rgba(15, 23, 42, 0.5) !important; border-top: 1px solid rgba(255,255,255,0.1) !important; }
 
-/* Admin Background Override (Matches the dynamic dark mesh) */
 body.dark-theme .admin-wrapper {
   background-color: #050c21 !important;
   background-image: 

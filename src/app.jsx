@@ -53,17 +53,14 @@ export function ArchitectPortfolio() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // UPGRADE: New state for expanding chat
   const [isChatExpanded, setIsChatExpanded] = useState(false);
 
-  // CMS & Silent Server States
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
   const [showBootOverlay, setShowBootOverlay] = useState(false);
 
   const prevLengthRef = useRef(0);
 
-  // --- PERSISTENCE LOGIC FOR VISITOR ---
   const [visitorId] = useState(() => {
     let vid = localStorage.getItem('vpk_visitor_id');
     if (!vid) {
@@ -80,7 +77,6 @@ export function ArchitectPortfolio() {
     return parsed;
   });
 
-  // Toggle Dark Mode globally
   useEffect(() => {
     if (isDarkMode) {
       document.body.classList.add('dark-theme');
@@ -89,7 +85,6 @@ export function ArchitectPortfolio() {
     }
   }, [isDarkMode]);
 
-  // Mobile Click-Outside Drawer Handler & Expanded Chat Scroll Lock
   useEffect(() => {
     const handleMobileRemovers = (e) => {
       if (!isMobileMenuOpen) return;
@@ -99,7 +94,6 @@ export function ArchitectPortfolio() {
       }
     };
 
-    // Lock background scrolling if menu OR chat is expanded
     if (isMobileMenuOpen || isChatExpanded) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -113,7 +107,6 @@ export function ArchitectPortfolio() {
     };
   }, [isMobileMenuOpen, isChatExpanded]);
 
-  // 💡 SILENT BACKGROUND SERVER POLLING (No automatic overlays)
   useEffect(() => {
     let isMounted = true;
     let pollInterval;
@@ -126,18 +119,15 @@ export function ArchitectPortfolio() {
           if (isMounted) {
             setPublishedArticles(Array.isArray(data) ? data : []);
             setIsBackendReady(true);
-            setShowBootOverlay(false); // Auto-close overlay if it was open
-            clearInterval(pollInterval); // Stop polling once connected
+            setShowBootOverlay(false); 
+            clearInterval(pollInterval); 
           }
         }
-      } catch (err) {
-        // Server is offline/sleeping. Do nothing silently.
-      }
+      } catch (err) {}
     };
 
-    checkServer(); // Initial silent check
+    checkServer(); 
 
-    // Ping every 5 seconds until it wakes up
     pollInterval = setInterval(() => {
       if (!isBackendReady) checkServer();
     }, 5000);
@@ -148,7 +138,6 @@ export function ArchitectPortfolio() {
     };
   }, [isBackendReady]);
 
-  // Save chat to local storage
   useEffect(() => {
     localStorage.setItem('vpk_chat_history', JSON.stringify(chatLog));
     if (chatLog.length > prevLengthRef.current) {
@@ -159,7 +148,6 @@ export function ArchitectPortfolio() {
     prevLengthRef.current = chatLog.length;
   }, [chatLog]);
 
-// SOCKET LOGIC
   useEffect(() => {
     if (socket.connected) {
       socket.emit('join_visitor', { visitorId });
@@ -167,12 +155,10 @@ export function ArchitectPortfolio() {
     const onConnect = () => socket.emit('join_visitor', { visitorId });
     socket.on('connect', onConnect);
     
-    // ADDED: sender: 'admin' so the UI knows this is YOU typing
     socket.on('admin_msg_received', (msg) => {
       setChatLog(prev => [...prev, { type: 'received', sender: 'admin', text: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     });
     
-    // ADDED: sender: 'bot' so the UI knows this is the automated system
     socket.on('bot_reply', (data) => {
       setChatLog(prev => [...prev, { type: 'received', sender: 'bot', text: data.message, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     });
@@ -184,7 +170,6 @@ export function ArchitectPortfolio() {
     };
   }, [visitorId]);
 
-  // 💡 INTERCEPTOR: Trigger overlay ONLY if server is asleep and user clicks AI
   const handleAiSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -215,7 +200,6 @@ export function ArchitectPortfolio() {
     setPrompt('');
   };
 
-  // 💡 INTERCEPTOR: Trigger overlay ONLY if server is asleep and user sends msg
   const handleSendMessage = () => {
     if (!message.trim()) return;
 
@@ -231,16 +215,11 @@ export function ArchitectPortfolio() {
   
   return (
     <div className="dashboard-layout">
-      {/* =========================================
-          GLOBAL INLINE STYLES FOR COMPONENTS
-          ========================================= */}
       <style dangerouslySetInnerHTML={{ __html: `
-        /* UPGRADED: Premium Dark Background & Subhams Networks Watermark */
         .wa-widget { position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid rgba(255,255,255,0.1); background: #050a15; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: rgba(255, 255, 255, 0.03); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 6px; }
         
-        /* EXPANDED CHAT UPGRADE */
-        .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; }
+        .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; height: 100dvh !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; }
         
         .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.95); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .wa-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
@@ -258,30 +237,9 @@ export function ArchitectPortfolio() {
         .wa-input:focus { background: rgba(255,255,255,0.1); border-color: #3b82f6;}
         .wa-btn { background: #3b82f6; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: 0.2s;}
         .wa-btn:hover { transform: scale(1.05); background: #2563eb;}
-
-        /* Typewriter Animation Logic */
-        .typewriter-text {
-          display: inline-block;
-          overflow: hidden;
-          white-space: nowrap;
-          border-right: 2px solid #3b82f6;
-          animation: typing 2.5s steps(40, end), blink-caret 0.75s step-end infinite;
-          max-width: 0;
-          animation-fill-mode: forwards;
-        }
-        @keyframes typing { from { max-width: 0; } to { max-width: 100%; } }
-        @keyframes blink-caret { from, to { border-color: transparent; } 50% { border-color: #3b82f6; } }
         @keyframes customSpinner { to { transform: rotate(360deg); } }
-        
-        /* Mobile Specific Overrides */
-        @media (max-width: 768px) {
-          .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
-        }
       `}} />
 
-      {/* =========================================
-          SERVER WAKEUP GLASS OVERLAY (ON ACTION)
-          ========================================= */}
       {showBootOverlay && (
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
@@ -314,16 +272,10 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
-      {/* =========================================
-          FLOATING UI CONTROLS (BULLETPROOF TOGGLE)
-          ========================================= */}
-      <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 99999 }}>
-        {/* Dark Mode Toggle */}
+      <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
         <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
           {isDarkMode ? '🌙' : '☀️'}
         </button>
-
-        {/* Mobile Hamburger Menu */}
         <button 
           className="ui-btn mobile-menu-btn"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -332,15 +284,11 @@ export function ArchitectPortfolio() {
         </button>
       </div>
 
-      {/* =========================================
-          SIDEBAR NAVIGATION
-          ========================================= */}
       <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <img src="/profile.png" alt="Venkata Pavan Kumar Profile" className="profile-img" />
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
 
-        {/* NEW: MOBILE IN-MENU NAVIGATION LINKS */}
         <div className="mobile-nav-menu">
           <div className="section-title">Navigation</div>
           <a href="#projects" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>🚀</span> Live Links</a>
@@ -354,7 +302,7 @@ export function ArchitectPortfolio() {
           <span className="skill-tag">WebSockets</span><span className="skill-tag">MongoDB</span><span className="skill-tag">React</span>
         </div>
 
-     <div className="section-title">Connect & Links</div>
+        <div className="section-title">Connect & Links</div>
         <div className="social-links">
           <a href="https://www.linkedin.com/in/venkata-pavan-kumar-server" target="_blank" rel="noopener noreferrer" className="social-link link-linkedin"><span>💼</span> LinkedIn</a>
           <a href="https://github.com/Vpk-star-space" target="_blank" rel="noopener noreferrer" className="social-link link-github"><span>🐙</span> GitHub</a>
@@ -362,12 +310,8 @@ export function ArchitectPortfolio() {
           <a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
         </div>
       </aside>
-      {/* =========================================
-          MAIN CONTENT PORTFOLIO
-          ========================================= */}
-      <main className="main-content">
 
-        {/* NEW: PREMIUM TOP GLASS NAVIGATION & AI SEARCH */}
+      <main className="main-content">
         <nav className="top-nav-glass">
           <div className="top-nav-links">
             <a href="#projects" className="top-nav-link">Live Links</a>
@@ -387,8 +331,7 @@ export function ArchitectPortfolio() {
           </form>
         </nav>
 
-        {/* AI RESPONSE RENDER AREA (Right below the nav) */}
-        {isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#2997ff', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
+        {isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#3b82f6', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
         {aiResponse && !isAiLoading && (
           <div className="ai-response-window" style={{ margin: '0 auto 30px auto', maxWidth: '1300px', width: '96%' }}>
             <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
@@ -403,13 +346,11 @@ export function ArchitectPortfolio() {
           </div>
         )}
 
-        {/* FORMAL WELCOME HERO */}
         <div className="hero-section">
           <h1>Welcome to my Engineering Portfolio.</h1>
           <p>I am <strong>Venkata Pavan Kumar Amarthaluri</strong>, a Systems Architect specialized in high-performance backend infrastructure.</p>
         </div>
 
-        {/* SCROLLING TICKER */}
         {showBanner && (
           <div className="scrolling-ticker">
             <div className="scrolling-text">
@@ -419,23 +360,27 @@ export function ArchitectPortfolio() {
         )}
 
         <div className="grid-layout">
-          {/* PROJECTS SECTION WITH ID FOR JUMP LINK */}
           <section id="projects" className="projects-container">
             <h2 className="main-heading">✦ Live Architecture Projects</h2>
             <div className="projects-grid">
               <a href="https://subhams-agent-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-blue">
-                <h3>🌐 Subhams Secure Networks</h3><p>RAM-based transient state architecture.</p>
+                <h3>🌐 Subhams Secure Networks</h3>
+                <p>RAM-based transient state architecture.</p>
+                <div className="project-metrics">⚡ Processes 10k+ ops/sec</div>
               </a>
               <a href="https://bhavyams-vendor-hub-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-orange">
-                <h3>🛒 Bhavyams VendorHub</h3><p>Scalable E-commerce ecosystem engine.</p>
+                <h3>🛒 Bhavyams VendorHub</h3>
+                <p>Scalable E-commerce ecosystem engine.</p>
+                <div className="project-metrics">🚀 Handles 5k+ concurrent requests</div>
               </a>
               <a href="https://subhams-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-green">
-                <h3>🔒 PMMS System</h3><p>Secure financial tracking infrastructure.</p>
+                <h3>🔒 PMMS System</h3>
+                <p>Secure financial tracking infrastructure.</p>
+                <div className="project-metrics">🛡️ Zero-disk data retention</div>
               </a>
             </div>
           </section>
 
-          {/* DEV.TO STYLE ARTICLE FEED WITH ID FOR JUMP LINK */}
           <section id="articles" className="articles-container">
             <h2 className="main-heading" style={{ marginTop: '20px' }}>📝 Technical Publications</h2>
             <div className="articles-list">
@@ -467,13 +412,11 @@ export function ArchitectPortfolio() {
             </div>
           </section>
 
-          {/* WHATSAPP STYLE VISITOR TUNNEL WITH ID FOR JUMP LINK */}
           <section id="contact" style={{ display: 'flex', flexDirection: 'column', marginTop: '40px' }}>
             <h2 style={{ color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center' }}>
               <span className="live-dot" style={{ background: isBackendReady ? '#00a884' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isBackendReady ? '0 0 10px rgba(0, 168, 132, 0.5)' : 'none', animation: isBackendReady ? 'pulse 2s infinite' : 'none' }}></span>
               Direct Secure Line
             </h2>
-            {/* UPGRADE: Conditional expanded class added here */}
             <div className={`wa-widget ${isChatExpanded ? 'expanded-chat' : ''}`}>
               <div className="wa-header">
                 <div className="wa-avatar" style={{ background: '#6b7c85', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
@@ -481,7 +424,6 @@ export function ArchitectPortfolio() {
                   <h3>Venkata Pavan Kumar</h3>
                   <p>System Architect • {isBackendReady ? 'Available' : 'Booting...'}</p>
                 </div>
-                {/* UPGRADE: Expand Toggle Button */}
                 <button 
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
                   style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#8696a0', fontSize: '1.2rem', cursor: 'pointer', transition: '0.2s' }}
@@ -502,7 +444,6 @@ export function ArchitectPortfolio() {
                 {chatLog.map((log, i) => (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <div className={`wa-bubble ${log.type === 'sent' ? 'wa-sent' : 'wa-received'}`}>
-                      {/* UPGRADED: Dynamic Name based on sender property */}
                       {log.type === 'received' && (
                         <div style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: '900', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {log.sender === 'bot' ? 'Subhams Networks' : 'Venkata Pavan Kumar'}
@@ -529,7 +470,6 @@ export function ArchitectPortfolio() {
             </div>
           </section>
 
-          {/* SUBHAMS FOOTER */}
           <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '30px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <span style={{ animation: 'float-sparkle 2s ease-in-out infinite', fontSize: '13px' }}>✨</span>
@@ -553,18 +493,15 @@ export function ArticleView() {
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
   
-  // Interaction States
   const [isLiking, setIsLiking] = useState(false);
   const [commentName, setCommentName] = useState('');
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Grab Visitor ID for tracking
   const visitorId = localStorage.getItem('vpk_visitor_id') || 'unknown_visitor';
 
   useEffect(() => {
   fetch(`${BACKEND_URL}/api/articles/${slug}`)
-  
       .then(res => res.json())
       .then(data => setArticle(data))
       .catch(err => console.error(err));
@@ -577,9 +514,7 @@ export function ArticleView() {
       const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/like`, { method: 'POST' });
       const data = await res.json();
       setArticle(prev => ({ ...prev, likes: data.likes }));
-    } catch (err) {
-      console.error("Like failed", err);
-    }
+    } catch (err) {}
     setTimeout(() => setIsLiking(false), 1000); 
   };
 
@@ -597,9 +532,7 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
       const updatedComments = await res.json();
       setArticle(prev => ({ ...prev, comments: updatedComments }));
       setCommentText(''); 
-    } catch (err) {
-      console.error("Comment failed", err);
-    }
+    } catch (err) {}
     setIsSubmitting(false);
   };
 
@@ -611,22 +544,16 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
 
   if (!article) return <div style={{ color: '#8696a0', textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', fontWeight: 'bold' }}>Booting infrastructure...</div>;
 
-  
   return (
   <div className="article-page-wrapper">
       <Helmet>
-        {/* Basic SEO */}
         <title>{article.title} | Venkata Pavan Kumar</title>
         <meta name="description" content={cleanDescription} />
         <link rel="canonical" href={currentUrl} />
-
-        {/* Open Graph (Social Sharing for WhatsApp/Facebook/LinkedIn) */}
         <meta property="og:title" content={`${article.title} | Venkata Pavan Kumar`} />
         <meta property="og:description" content={cleanDescription} />
         <meta property="og:url" content={currentUrl} />
         <meta property="og:type" content="article" />
-        
-        {/* Twitter/X Cards */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={cleanDescription} />
@@ -657,7 +584,6 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
           {renderMarkdown(article.content)}
         </div>
 
-        {/* COMMENTS SECTION */}
         <section style={{ borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: '40px', marginTop: '60px' }}>
           <h3 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '20px', fontWeight: '800' }}>Discussion ({article.comments?.length || 0})</h3>
           
@@ -698,7 +624,6 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
         </section>
       </article>
 
-      {/* FOOTER */}
       <div style={{ textAlign: 'center', marginTop: '20px', paddingBottom: '25px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <span style={{ animation: 'float-sparkle 2s ease-in-out infinite', fontSize: '13px' }}>✨</span>
@@ -739,7 +664,6 @@ export function AdminDashboard() {
     localStorage.setItem('admin_chats', JSON.stringify(conversations));
   }, [conversations]);
   
-  // SOCKET LOGIC
   useEffect(() => {
     const onConnect = () => {
       setIsConnected(true);
@@ -889,7 +813,6 @@ export function AdminDashboard() {
         ) : (
               activeRoom ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* CHAT WINDOW HEADER */}
               <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div className="avatar" style={{ width: '45px', height: '45px', background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,1)', color: '#0f172a' }}>👤</div>
@@ -899,7 +822,6 @@ export function AdminDashboard() {
                   </div>
                 </div>
                 
-                {/* CLOSE CHAT BUTTON (Closes view, does NOT delete data) */}
                 <button 
                   onClick={() => setActiveRoom(null)} 
                   style={{ 
