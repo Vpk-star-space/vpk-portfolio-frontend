@@ -388,28 +388,27 @@ const handleAiSubmit = async (e) => {
           </form>
         </nav>
 {isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#3b82f6', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
-        {aiResponse && !isAiLoading && (
-          <div 
-            ref={aiResponseRef} 
-            className="ai-response-window" 
-            style={{ 
-              margin: '0 auto 30px auto', 
-              maxWidth: '1300px', 
-              width: '96%',
-              scrollMarginTop: '100px' /* This forces the jump to clear the sticky header */
-            }}
-          >
-            <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Gemini Agent Output
-              </span>
-              <button className="ai-close-btn" onClick={() => setAiResponse('')} title="Clear response">✕</button>
-            </div>
-            <div style={{ color: isDarkMode ? '#e1e1e6' : '#334155' }}>
-              {renderMarkdown(aiResponse)}
-            </div>
-          </div>
-        )}
+{aiResponse && !isAiLoading && (
+  <div 
+    ref={aiResponseRef} 
+    className="ai-response-window ai-jump-target" 
+    style={{ 
+      margin: '0 auto 30px auto', 
+      maxWidth: '1300px', 
+      width: '96%'
+    }}
+  >
+    <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+      <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+        Gemini Agent Output
+      </span>
+      <button className="ai-close-btn" onClick={() => setAiResponse('')} title="Clear response">✕</button>
+    </div>
+    <div style={{ color: isDarkMode ? '#e1e1e6' : '#334155' }}>
+      {renderMarkdown(aiResponse)}
+    </div>
+  </div>
+)}
 
         <div className="hero-section">
           <h1>Welcome to my Engineering Portfolio.</h1>
