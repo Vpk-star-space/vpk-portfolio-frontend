@@ -53,6 +53,9 @@ export function ArchitectPortfolio() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // UPGRADE: New state for expanding chat
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
+
   // CMS & Silent Server States
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
@@ -86,7 +89,7 @@ export function ArchitectPortfolio() {
     }
   }, [isDarkMode]);
 
-  // Mobile Click-Outside Drawer Handler
+  // Mobile Click-Outside Drawer Handler & Expanded Chat Scroll Lock
   useEffect(() => {
     const handleMobileRemovers = (e) => {
       if (!isMobileMenuOpen) return;
@@ -96,7 +99,8 @@ export function ArchitectPortfolio() {
       }
     };
 
-    if (isMobileMenuOpen) {
+    // Lock background scrolling if menu OR chat is expanded
+    if (isMobileMenuOpen || isChatExpanded) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -107,7 +111,7 @@ export function ArchitectPortfolio() {
       document.removeEventListener('click', handleMobileRemovers);
       document.body.style.overflow = '';
     };
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isChatExpanded]);
 
   // 💡 SILENT BACKGROUND SERVER POLLING (No automatic overlays)
   useEffect(() => {
@@ -155,19 +159,24 @@ export function ArchitectPortfolio() {
     prevLengthRef.current = chatLog.length;
   }, [chatLog]);
 
-  // SOCKET LOGIC
+// SOCKET LOGIC
   useEffect(() => {
     if (socket.connected) {
       socket.emit('join_visitor', { visitorId });
     }
     const onConnect = () => socket.emit('join_visitor', { visitorId });
     socket.on('connect', onConnect);
+    
+    // ADDED: sender: 'admin' so the UI knows this is YOU typing
     socket.on('admin_msg_received', (msg) => {
-      setChatLog(prev => [...prev, { type: 'received', text: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      setChatLog(prev => [...prev, { type: 'received', sender: 'admin', text: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     });
+    
+    // ADDED: sender: 'bot' so the UI knows this is the automated system
     socket.on('bot_reply', (data) => {
-      setChatLog(prev => [...prev, { type: 'received', text: data.message, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      setChatLog(prev => [...prev, { type: 'received', sender: 'bot', text: data.message, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     });
+    
     return () => { 
       socket.off('connect', onConnect); 
       socket.off('admin_msg_received'); 
@@ -188,7 +197,7 @@ export function ArchitectPortfolio() {
     setIsAiLoading(true);
     setAiResponse(''); 
     try {
-const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
+      const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
@@ -226,23 +235,29 @@ const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
           GLOBAL INLINE STYLES FOR COMPONENTS
           ========================================= */}
       <style dangerouslySetInnerHTML={{ __html: `
-        .wa-widget { border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid #222d34; background: #0b141a; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.4); margin-top: 10px;}
-        .wa-header { background: #202c33; padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #222d34; }
+        /* UPGRADED: Premium Dark Background & Subhams Networks Watermark */
+        .wa-widget { position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid rgba(255,255,255,0.1); background: #050a15; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
+        .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: rgba(255, 255, 255, 0.03); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 6px; }
+        
+        /* EXPANDED CHAT UPGRADE */
+        .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; }
+        
+        .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.95); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .wa-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .wa-header-text h3 { margin: 0; color: #e9edef; font-size: 1rem; }
         .wa-header-text p { margin: 0; color: #8696a0; font-size: 0.8rem; }
-        .wa-body { flex: 1; overflow-y: auto; padding: 20px; background-color: #0b141a; background-image: radial-gradient(#202c33 1px, transparent 1px); background-size: 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .wa-body { position: relative; z-index: 1; flex: 1; overflow-y: auto; padding: 20px; background-color: transparent; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; display: flex; flex-direction: column; gap: 10px; }
         .wa-body::-webkit-scrollbar { width: 6px; }
         .wa-body::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
-        .wa-bubble { padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 0.95rem; line-height: 1.4; color: #e9edef; position: relative; animation: popIn 0.2s ease forwards;}
-        .wa-sent { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; margin-right: 8px;}
-        .wa-sent::before { content: ""; position: absolute; top: 0; right: -8px; border-bottom: 12px solid transparent; border-left: 10px solid #005c4b; }
-        .wa-received { background: #202c33; align-self: flex-start; border-top-left-radius: 0; margin-left: 8px;}
-        .wa-received::before { content: ""; position: absolute; top: 0; left: -8px; border-bottom: 12px solid transparent; border-right: 10px solid #202c33; }
+        .wa-bubble { position: relative; z-index: 2; padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 0.95rem; line-height: 1.4; color: #e9edef; animation: popIn 0.2s ease forwards;}
+        .wa-sent { background: #3b82f6; align-self: flex-end; border-top-right-radius: 2px; margin-right: 4px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);}
+        .wa-received { background: #1e293b; align-self: flex-start; border-top-left-radius: 2px; margin-left: 4px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
         .wa-time { font-size: 0.65rem; color: rgba(255,255,255,0.6); float: right; margin-left: 10px; margin-top: 4px; }
-        .wa-footer { padding: 12px; background: #202c33; display: flex; gap: 10px; }
-        .wa-input { flex: 1; background: #2a3942; border: none; color: white; padding: 12px 16px; border-radius: 24px; outline: none; }
-        .wa-btn { background: #00a884; color: #111b21; border: none; width: 42px; height: 42px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        .wa-footer { position: relative; z-index: 2; padding: 12px; background: rgba(15, 23, 42, 0.95); display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .wa-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 18px; border-radius: 24px; outline: none; transition: 0.3s;}
+        .wa-input:focus { background: rgba(255,255,255,0.1); border-color: #3b82f6;}
+        .wa-btn { background: #3b82f6; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: 0.2s;}
+        .wa-btn:hover { transform: scale(1.05); background: #2563eb;}
 
         /* Typewriter Animation Logic */
         .typewriter-text {
@@ -325,44 +340,87 @@ const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
 
+        {/* NEW: MOBILE IN-MENU NAVIGATION LINKS */}
+        <div className="mobile-nav-menu">
+          <div className="section-title">Navigation</div>
+          <a href="#projects" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>🚀</span> Live Links</a>
+          <a href="#articles" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>📝</span> Articles</a>
+          <a href="#contact" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>💬</span> Get in Touch</a>
+        </div>
+
         <div className="section-title">Technical Arsenal</div>
         <div className="skill-tags">
           <span className="skill-tag">Node.js</span><span className="skill-tag">System Design</span>
           <span className="skill-tag">WebSockets</span><span className="skill-tag">MongoDB</span><span className="skill-tag">React</span>
         </div>
 
-        <div className="section-title">Connect & Links</div>
+     <div className="section-title">Connect & Links</div>
         <div className="social-links">
           <a href="https://www.linkedin.com/in/venkata-pavan-kumar-server" target="_blank" rel="noopener noreferrer" className="social-link link-linkedin"><span>💼</span> LinkedIn</a>
           <a href="https://github.com/Vpk-star-space" target="_blank" rel="noopener noreferrer" className="social-link link-github"><span>🐙</span> GitHub</a>
+          <a href="https://dev.to/vpkstarspace" target="_blank" rel="noopener noreferrer" className="social-link link-devto"><span>👨‍💻</span> Dev.to</a>
           <a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
         </div>
       </aside>
-
       {/* =========================================
           MAIN CONTENT PORTFOLIO
           ========================================= */}
       <main className="main-content">
+
+        {/* NEW: PREMIUM TOP GLASS NAVIGATION & AI SEARCH */}
+        <nav className="top-nav-glass">
+          <div className="top-nav-links">
+            <a href="#projects" className="top-nav-link">Live Links</a>
+            <a href="#articles" className="top-nav-link">Articles</a>
+            <a href="#contact" className="top-nav-link">Get in Touch</a>
+          </div>
+          
+          <form onSubmit={handleAiSubmit} className="top-search-wrapper">
+            <span className="top-search-icon" title="Gemini AI Agent">✧</span>
+            <input 
+              className="top-search-input" 
+              value={prompt} 
+              onChange={e => setPrompt(e.target.value)} 
+              placeholder="Ask AI about Pavan's expertise..." 
+              disabled={isAiLoading} 
+            />
+          </form>
+        </nav>
+
+        {/* AI RESPONSE RENDER AREA (Right below the nav) */}
+        {isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#2997ff', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
+        {aiResponse && !isAiLoading && (
+          <div className="ai-response-window" style={{ margin: '0 auto 30px auto', maxWidth: '1300px', width: '96%' }}>
+            <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Gemini Agent Output
+              </span>
+              <button className="ai-close-btn" onClick={() => setAiResponse('')} title="Clear response">✕</button>
+            </div>
+            <div style={{ color: isDarkMode ? '#e1e1e6' : '#334155' }}>
+              {renderMarkdown(aiResponse)}
+            </div>
+          </div>
+        )}
+
         {/* FORMAL WELCOME HERO */}
-       
-<div className="hero-section">
-  <h1>Welcome to my Engineering Portfolio.</h1>
-  {/* Add Amarthaluri right here */}
-  <p>I am <strong>Venkata Pavan Kumar Amarthaluri</strong>, a Systems Architect specialized in high-performance backend infrastructure.</p>
-</div>
+        <div className="hero-section">
+          <h1>Welcome to my Engineering Portfolio.</h1>
+          <p>I am <strong>Venkata Pavan Kumar Amarthaluri</strong>, a Systems Architect specialized in high-performance backend infrastructure.</p>
+        </div>
 
         {/* SCROLLING TICKER */}
         {showBanner && (
           <div className="scrolling-ticker">
-            <style>{`@keyframes slideLeftText { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }`}</style>
-            <div className="scrolling-text" style={{ animation: `slideLeftText ${scrollSpeed}s linear infinite` }}>
+            <div className="scrolling-text">
               🚀 ARCHITECTING ROBUST BACKEND INFRASTRUCTURE • SECURE SYSTEM DESIGN & SCALABILITY • DEPLOYING HIGH-PERFORMANCE SOLUTIONS
             </div>
           </div>
         )}
 
         <div className="grid-layout">
-          <section className="projects-container">
+          {/* PROJECTS SECTION WITH ID FOR JUMP LINK */}
+          <section id="projects" className="projects-container">
             <h2 className="main-heading">✦ Live Architecture Projects</h2>
             <div className="projects-grid">
               <a href="https://subhams-agent-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-blue">
@@ -377,8 +435,8 @@ const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
             </div>
           </section>
 
-          {/* DEV.TO STYLE ARTICLE FEED */}
-          <section className="articles-container">
+          {/* DEV.TO STYLE ARTICLE FEED WITH ID FOR JUMP LINK */}
+          <section id="articles" className="articles-container">
             <h2 className="main-heading" style={{ marginTop: '20px' }}>📝 Technical Publications</h2>
             <div className="articles-list">
               {Array.isArray(publishedArticles) && publishedArticles.length > 0 ? (
@@ -409,63 +467,47 @@ const response = await fetch(`${BACKEND_URL}/api/gemini/ask`, {
             </div>
           </section>
 
-          <section className="dash-card section-purple">
-            <h2>✧ Portfolio Intelligence
-              <span className="ai-badge">
-                <svg className="gemini-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" /></svg>
-                Gemini AI <span className="pulse-dot"></span>
-              </span>
-            </h2>
-            <form onSubmit={handleAiSubmit} className="ai-input-wrapper">
-              <input className="dash-input" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Ask the AI about Pavan's experience..." disabled={isAiLoading} />
-              <button type="submit" className="dash-btn btn-purple" disabled={isAiLoading}>Query AI</button>
-            </form>
-            <div style={{ minHeight: '60px', transition: 'all 0.3s ease-in-out', marginTop: '10px' }}>
-              {isAiLoading && <div className="loading-text" style={{ padding: '15px 0', color: '#6b21a8', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
-              
-              {aiResponse && !isAiLoading && (
-                <div className="ai-response-window">
-                  <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                      System Output
-                    </span>
-                    <button className="ai-close-btn" onClick={() => setAiResponse('')} title="Clear response">✕</button>
-                  </div>
-                  <div style={{ color: '#334155' }}>
-                    {renderMarkdown(aiResponse)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* WHATSAPP STYLE VISITOR TUNNEL */}
-          <section style={{ display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ color: '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center' }}>
+          {/* WHATSAPP STYLE VISITOR TUNNEL WITH ID FOR JUMP LINK */}
+          <section id="contact" style={{ display: 'flex', flexDirection: 'column', marginTop: '40px' }}>
+            <h2 style={{ color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center' }}>
               <span className="live-dot" style={{ background: isBackendReady ? '#00a884' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isBackendReady ? '0 0 10px rgba(0, 168, 132, 0.5)' : 'none', animation: isBackendReady ? 'pulse 2s infinite' : 'none' }}></span>
               Direct Secure Line
             </h2>
-            <div className="wa-widget">
+            {/* UPGRADE: Conditional expanded class added here */}
+            <div className={`wa-widget ${isChatExpanded ? 'expanded-chat' : ''}`}>
               <div className="wa-header">
                 <div className="wa-avatar" style={{ background: '#6b7c85', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
                 <div className="wa-header-text">
                   <h3>Venkata Pavan Kumar</h3>
                   <p>System Architect • {isBackendReady ? 'Available' : 'Booting...'}</p>
                 </div>
+                {/* UPGRADE: Expand Toggle Button */}
+                <button 
+                  onClick={() => setIsChatExpanded(!isChatExpanded)} 
+                  style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#8696a0', fontSize: '1.2rem', cursor: 'pointer', transition: '0.2s' }}
+                  title={isChatExpanded ? "Minimize Chat" : "Expand Chat"}
+                >
+                  {isChatExpanded ? '🗗' : '🗖'}
+                </button>
               </div>
 
               <div className="wa-body">
                 <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-                  <span style={{ background: '#182229', color: '#8696a0', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem' }}>
+                  <span style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.05)', color: '#8696a0', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem' }}>
                     End-to-end encrypted connection
                   </span>
                 </div>
-                {chatLog.length === 0 && <div style={{ textAlign: 'center', color: '#8696a0', fontSize: '0.9rem', marginTop: '20px' }}>Send a message to connect securely.</div>}
+                {chatLog.length === 0 && <div style={{ textAlign: 'center', color: '#8696a0', fontSize: '0.9rem', marginTop: '20px', position: 'relative', zIndex: 2 }}>Send a message to connect securely.</div>}
                 
                 {chatLog.map((log, i) => (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <div className={`wa-bubble ${log.type === 'sent' ? 'wa-sent' : 'wa-received'}`}>
-                      {log.type === 'received' && <div style={{ fontSize: '0.7rem', color: '#00a884', fontWeight: 'bold', marginBottom: '2px' }}>Venkata Pavan</div>}
+                      {/* UPGRADED: Dynamic Name based on sender property */}
+                      {log.type === 'received' && (
+                        <div style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: '900', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {log.sender === 'bot' ? 'Subhams Networks' : 'Venkata Pavan Kumar'}
+                        </div>
+                      )}
                       {log.text}
                       <span className="wa-time">{log.time}</span>
                     </div>
@@ -561,12 +603,11 @@ const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
     setIsSubmitting(false);
   };
 
-  // 1. ADD THESE TWO LINES HERE
-const cleanDescription = article?.content 
+  const cleanDescription = article?.content 
     ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) 
     : "Read this article on my portfolio.";
 
-const currentUrl = `https://venkatapavankumar.vercel.app/article/${slug}`;
+  const currentUrl = `https://venkatapavankumar.vercel.app/article/${slug}`;
 
   if (!article) return <div style={{ color: '#8696a0', textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', fontWeight: 'bold' }}>Booting infrastructure...</div>;
 
