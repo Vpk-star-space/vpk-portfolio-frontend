@@ -215,11 +215,7 @@ export function ArchitectPortfolio() {
   
   return (
     <div className="dashboard-layout">
-      {/* =========================================
-          GLOBAL INLINE STYLES FOR COMPONENTS
-          ========================================= */}
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Premium Dark Background & Subhams Networks Watermark */
         .wa-widget { position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid rgba(255,255,255,0.1); background: #050a15; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: rgba(255, 255, 255, 0.03); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 6px; }
         
@@ -243,7 +239,6 @@ export function ArchitectPortfolio() {
         .wa-btn:hover { transform: scale(1.05); background: #2563eb;}
         @keyframes customSpinner { to { transform: rotate(360deg); } }
 
-        /* UPGRADED: Tappable Expand Button */
         .chat-expand-btn {
           margin-left: auto;
           background: rgba(255, 255, 255, 0.1);
@@ -264,20 +259,6 @@ export function ArchitectPortfolio() {
           background: #3b82f6;
           border-color: #3b82f6;
           transform: scale(1.05);
-        }
-
-        /* UPGRADED: Mobile Specific Overrides applied directly here */
-        @media (max-width: 1024px) {
-          .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
-          
-          /* Force Search Bar to top and clear the floating buttons */
-          .top-nav-glass { 
-            display: flex !important; 
-            padding: 10px 15px !important;
-            margin: 65px auto 20px auto !important; 
-          }
-          .top-nav-links { display: none !important; } 
-          .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
         }
       `}} />
 
@@ -313,7 +294,7 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
-      {/* Hide controls if chat is expanded so they don't cover the close button */}
+      {/* UPGRADE: Hide controls if chat is expanded so they don't cover the close button */}
       {!isChatExpanded && (
         <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
@@ -333,6 +314,7 @@ export function ArchitectPortfolio() {
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
 
+        {/* Removed Mobile Search Form from here as it now lives properly in the top navigation */}
         <div className="mobile-nav-menu">
           <div className="section-title">Navigation</div>
           <a href="#projects" className="social-link" onClick={() => setIsMobileMenuOpen(false)}><span>🚀</span> Live Links</a>
@@ -469,7 +451,6 @@ export function ArchitectPortfolio() {
                   <p>System Architect • {isBackendReady ? 'Available' : 'Booting...'}</p>
                 </div>
                 
-                {/* UPGRADED: Chat Expand Button with proper CSS class */}
                 <button 
                   className="chat-expand-btn"
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 

@@ -394,7 +394,7 @@ body {
   right: 20px !important;
   display: flex !important;
   gap: 10px !important;
-  z-index: 999999 !important; /* FIXED: Elevated above mobile menu */
+  z-index: 999999 !important; 
 }
 
 .ui-btn, .mobile-menu-btn {
@@ -475,11 +475,12 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 @media (max-width: 1024px) {
   .mobile-menu-btn { display: flex !important; }
   
-  /* FIXED: Search bar is now visible on mobile, just the links are hidden */
+  /* UPGRADED: Force Search Bar to top on mobile and hide links */
   .top-nav-glass { 
     display: flex !important; 
     padding: 10px 15px !important;
-    margin: 0 auto 20px auto !important;
+    margin: 85px auto 20px auto !important; /* Pushed below floating buttons */
+    width: 90% !important;
   }
   .top-nav-links { display: none !important; } 
   .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
@@ -488,7 +489,6 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
   .dashboard-layout { display: flex; flex-direction: column; width: 100%; overflow-x: hidden; }
 
-  /* FIXED: Sidebar height and scroll padding so Email link isn't stuck */
   .sidebar {
     position: fixed !important;
     left: -340px !important;
@@ -507,10 +507,9 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
   .sidebar.mobile-open { left: 0 !important; box-shadow: 25px 0 60px rgba(0, 0, 0, 0.6) !important; }
 
-  /* FIXED: Pushed content down so floating buttons don't block the Hero text */
   .main-content {
     margin-left: 0 !important;
-    padding: 85px 16px 20px 16px !important; 
+    padding: 0px 16px 20px 16px !important; /* Search bar acts as spacer now */
     width: 100% !important;
     max-width: 100% !important;
   }
