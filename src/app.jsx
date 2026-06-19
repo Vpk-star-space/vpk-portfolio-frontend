@@ -264,17 +264,21 @@ export function ArchitectPortfolio() {
           transform: scale(1.05);
         }
 
-        /* UPGRADED: Keep ALL Navigation & Search visible at the top on Mobile */
+        /* UPGRADED: Mobile Specific Overrides */
         @media (max-width: 1024px) {
           .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
           
-          /* Show links and search, stacked neatly for mobile screens */
+          /* FIXED: Force fixed positioning so it never scrolls away */
           .top-nav-glass { 
+            position: fixed !important;
+            top: 85px !important;
+            left: 5% !important;
+            z-index: 9998 !important;
             display: flex !important; 
             flex-direction: column !important;
-            gap: 15px !important;
+            gap: 12px !important;
             padding: 15px !important;
-            margin: 75px auto 20px auto !important; 
+            margin: 0 !important; 
             width: 90% !important;
           }
           .top-nav-links { 
@@ -340,8 +344,6 @@ export function ArchitectPortfolio() {
         <img src="/profile.png" alt="Venkata Pavan Kumar Profile" className="profile-img" />
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
-
-        {/* The redundant mobile links are removed from here. Only Profile details remain. */}
 
         <div className="section-title">Technical Arsenal</div>
         <div className="skill-tags">
