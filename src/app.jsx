@@ -238,6 +238,31 @@ export function ArchitectPortfolio() {
         .wa-btn { background: #3b82f6; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: 0.2s;}
         .wa-btn:hover { transform: scale(1.05); background: #2563eb;}
         @keyframes customSpinner { to { transform: rotate(360deg); } }
+
+        /* UPGRADE: Floating Expand Button Fix for Mobile */
+        .chat-expand-btn {
+          position: absolute;
+          top: 12px;
+          right: 16px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #8696a0;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: 10;
+        }
+        .chat-expand-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          color: #fff;
+          transform: scale(1.1);
+        }
       `}} />
 
       {showBootOverlay && (
@@ -272,22 +297,39 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
-      <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
-        <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
-          {isDarkMode ? '🌙' : '☀️'}
-        </button>
-        <button 
-          className="ui-btn mobile-menu-btn"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? '✕' : '☰'}
-        </button>
-      </div>
+      {/* FIXED: ui-controls hidden when chat is expanded so they don't overlap the close button */}
+      {!isChatExpanded && (
+        <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
+            {isDarkMode ? '🌙' : '☀️'}
+          </button>
+          <button 
+            className="ui-btn mobile-menu-btn"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
+      )}
 
       <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <img src="/profile.png" alt="Venkata Pavan Kumar Profile" className="profile-img" />
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
+
+        {/* UPGRADE: Top Search integrated into Mobile Sidebar Menu */}
+        <div className="mobile-nav-menu" style={{ marginBottom: '15px', paddingBottom: '15px' }}>
+          <form onSubmit={handleAiSubmit} style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.9)', borderRadius: '16px', padding: '10px 14px', width: '100%' }}>
+            <span style={{ color: '#3b82f6', marginRight: '8px', fontWeight: 'bold' }}>✧</span>
+            <input 
+              style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', fontWeight: '600', fontSize: '0.95rem', color: '#0f172a' }}
+              value={prompt} 
+              onChange={e => setPrompt(e.target.value)} 
+              placeholder="Ask AI about Pavan..." 
+              disabled={isAiLoading} 
+            />
+          </form>
+        </div>
 
         <div className="mobile-nav-menu">
           <div className="section-title">Navigation</div>
@@ -424,13 +466,16 @@ export function ArchitectPortfolio() {
                   <h3>Venkata Pavan Kumar</h3>
                   <p>System Architect • {isBackendReady ? 'Available' : 'Booting...'}</p>
                 </div>
+                
+                {/* UPGRADE: Styled expand button safely moved away from other elements */}
                 <button 
+                  className="chat-expand-btn"
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
-                  style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#8696a0', fontSize: '1.2rem', cursor: 'pointer', transition: '0.2s' }}
                   title={isChatExpanded ? "Minimize Chat" : "Expand Chat"}
                 >
-                  {isChatExpanded ? '🗗' : '🗖'}
+                  {isChatExpanded ? '✕' : '🗖'}
                 </button>
+
               </div>
 
               <div className="wa-body">
