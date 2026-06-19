@@ -42,7 +42,8 @@ html {
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #0f172a;
-  overflow-x: hidden;
+  /* FIXED: Changed to 'clip' to prevent breaking sticky positioning */
+  overflow-x: clip;
   transition: background-color 0.8s ease, color 0.8s ease;
   
   background-color: #e0f2fe;
@@ -475,17 +476,20 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 @media (max-width: 1024px) {
   .mobile-menu-btn { display: flex !important; }
   
-  /* FIXED: Show links and search bar stacked in the glass nav */
+  /* FIXED: Search bar is now visible on mobile, sticky, and clears floating buttons */
   .top-nav-glass { 
+    position: sticky !important;
+    top: 85px !important;
+    z-index: 9999 !important;
     display: flex !important; 
     flex-direction: column !important;
     gap: 12px !important;
     padding: 15px !important;
-    margin: 85px auto 20px auto !important; /* Clears floating buttons */
+    margin: 85px auto 20px auto !important;
     width: 90% !important;
   }
   .top-nav-links { 
-    display: flex !important; /* Restored! */
+    display: flex !important;
     width: 100% !important;
     justify-content: center !important;
     flex-wrap: wrap !important;
@@ -496,7 +500,8 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
   .mobile-nav-menu { display: flex !important; } 
 
-  .dashboard-layout { display: flex; flex-direction: column; width: 100%; overflow-x: hidden; }
+  /* FIXED: Removed overflow-x hidden so 'sticky' position works on mobile */
+  .dashboard-layout { display: flex; flex-direction: column; width: 100%; }
 
   .sidebar {
     position: fixed !important;
@@ -518,7 +523,7 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
   .main-content {
     margin-left: 0 !important;
-    padding: 0px 16px 20px 16px !important;
+    padding: 0px 16px 20px 16px !important; 
     width: 100% !important;
     max-width: 100% !important;
   }
