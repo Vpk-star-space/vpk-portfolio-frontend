@@ -166,7 +166,7 @@ body {
   padding: 40px 25px;
   position: fixed; left: 0; top: 0; height: 100vh; overflow-y: auto;
   box-shadow: var(--glass-shadow-light); 
-  z-index: 100;
+  z-index: 100; /* FIXED: Default lower z-index */
   transition: transform var(--spring-duration) var(--spring-easing), left var(--spring-duration) var(--spring-easing);
   animation: fadeIn 0.8s var(--spring-easing);
 }
@@ -419,7 +419,7 @@ body {
   right: 20px !important;
   display: flex !important;
   gap: 10px !important;
-  z-index: 99999 !important;
+  z-index: 999999 !important; /* FIXED: Elevated above mobile menu */
 }
 
 /* Base UI Button - Inherits VisionOS spring easing */
@@ -528,10 +528,10 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     width: 320px !important;
     height: 100vh !important;
     border-radius: 0 !important;
-    z-index: 88888 !important; 
+    z-index: 9999 !important; /* FIXED: Sits under the floating controls */
     transition: left 0.35s var(--spring-easing) !important;
     overflow-y: auto !important;
-    padding-top: 80px !important;
+    padding-top: 90px !important; /* FIXED: Added space so UI controls don't block profile img */
   }
 
   /* Target dynamic transition entry hook */
