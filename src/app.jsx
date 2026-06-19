@@ -215,7 +215,11 @@ export function ArchitectPortfolio() {
   
   return (
     <div className="dashboard-layout">
+      {/* =========================================
+          GLOBAL INLINE STYLES FOR COMPONENTS
+          ========================================= */}
       <style dangerouslySetInnerHTML={{ __html: `
+        /* Premium Dark Background & Subhams Networks Watermark */
         .wa-widget { position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid rgba(255,255,255,0.1); background: #050a15; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: rgba(255, 255, 255, 0.03); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 6px; }
         
@@ -239,29 +243,41 @@ export function ArchitectPortfolio() {
         .wa-btn:hover { transform: scale(1.05); background: #2563eb;}
         @keyframes customSpinner { to { transform: rotate(360deg); } }
 
-        /* UPGRADE: Floating Expand Button Fix for Mobile */
+        /* UPGRADED: Tappable Expand Button */
         .chat-expand-btn {
-          position: absolute;
-          top: 12px;
-          right: 16px;
+          margin-left: auto;
           background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: #8696a0;
-          width: 36px;
-          height: 36px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: #fff;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           cursor: pointer;
           transition: all 0.2s ease;
           z-index: 10;
         }
         .chat-expand-btn:hover {
-          background: rgba(255, 255, 255, 0.2);
-          color: #fff;
-          transform: scale(1.1);
+          background: #3b82f6;
+          border-color: #3b82f6;
+          transform: scale(1.05);
+        }
+
+        /* UPGRADED: Mobile Specific Overrides applied directly here */
+        @media (max-width: 1024px) {
+          .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
+          
+          /* Force Search Bar to top and clear the floating buttons */
+          .top-nav-glass { 
+            display: flex !important; 
+            padding: 10px 15px !important;
+            margin: 65px auto 20px auto !important; 
+          }
+          .top-nav-links { display: none !important; } 
+          .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
         }
       `}} />
 
@@ -297,7 +313,7 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
-      {/* FIXED: ui-controls hidden when chat is expanded so they don't overlap the close button */}
+      {/* Hide controls if chat is expanded so they don't cover the close button */}
       {!isChatExpanded && (
         <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
@@ -316,20 +332,6 @@ export function ArchitectPortfolio() {
         <img src="/profile.png" alt="Venkata Pavan Kumar Profile" className="profile-img" />
         <h1>Venkata Pavan Kumar</h1>
         <p className="title"><span className="typewriter-text">Systems Architect & Backend Engineer</span></p>
-
-        {/* UPGRADE: Top Search integrated into Mobile Sidebar Menu */}
-        <div className="mobile-nav-menu" style={{ marginBottom: '15px', paddingBottom: '15px' }}>
-          <form onSubmit={handleAiSubmit} style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.9)', borderRadius: '16px', padding: '10px 14px', width: '100%' }}>
-            <span style={{ color: '#3b82f6', marginRight: '8px', fontWeight: 'bold' }}>✧</span>
-            <input 
-              style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', fontWeight: '600', fontSize: '0.95rem', color: '#0f172a' }}
-              value={prompt} 
-              onChange={e => setPrompt(e.target.value)} 
-              placeholder="Ask AI about Pavan..." 
-              disabled={isAiLoading} 
-            />
-          </form>
-        </div>
 
         <div className="mobile-nav-menu">
           <div className="section-title">Navigation</div>
@@ -467,7 +469,7 @@ export function ArchitectPortfolio() {
                   <p>System Architect • {isBackendReady ? 'Available' : 'Booting...'}</p>
                 </div>
                 
-                {/* UPGRADE: Styled expand button safely moved away from other elements */}
+                {/* UPGRADED: Chat Expand Button with proper CSS class */}
                 <button 
                   className="chat-expand-btn"
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
@@ -475,7 +477,6 @@ export function ArchitectPortfolio() {
                 >
                   {isChatExpanded ? '✕' : '🗖'}
                 </button>
-
               </div>
 
               <div className="wa-body">
