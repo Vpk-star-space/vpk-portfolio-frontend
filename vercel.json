@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination":"https://vpk-portfolio-backend.onrender.com/sitemap.xml"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
