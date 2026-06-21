@@ -8,6 +8,27 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 const socket = io(BACKEND_URL);
 
 // ==========================================
+// STRICT TIMEZONE CONTROLLER 
+// ==========================================
+const getCleanTime = () => {
+  try {
+    return new Intl.DateTimeFormat('en-US', { 
+      timeZone: 'Asia/Kolkata', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true
+    }).format(new Date());
+  } catch (e) {
+    return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+};
+
+const cleanTimestamp = (ts) => {
+  if (!ts) return getCleanTime();
+  return ts.replace(/:(\d{2}):\d{2}/, ':$1'); 
+};
+
+// ==========================================
 // CUSTOM AI & DEV.TO STYLE MARKDOWN PARSER
 // ==========================================
 const parseInline = (text) => {
@@ -30,8 +51,8 @@ const renderMarkdown = (text) => {
   return lines.map((line, i) => {
     if (!line.trim()) return <div key={i} className="md-spacer" />;
     if (line.startsWith('# ')) return <h1 key={i} className="md-h1">{parseInline(line.slice(2))}</h1>;
-    if (line.startsWith('## ')) return <h2 key={i} className="md-h2">{parseInline(line.slice(3))}</h2>;
-    if (line.startsWith('### ')) return <h3 key={i} className="md-h3">{parseInline(line.slice(4))}</h3>;
+    if (line.startsWith('## ')) return <h2 key={i} className="md-h2"><strong>{parseInline(line.slice(3))}</strong></h2>;
+    if (line.startsWith('### ')) return <h3 key={i} className="md-h3"><strong>{parseInline(line.slice(4))}</strong></h3>;
     if (line.startsWith('> ')) return <blockquote key={i} className="md-quote">{parseInline(line.slice(2))}</blockquote>;
     if (line.startsWith('* ') || line.startsWith('- ')) return <li key={i} className="md-li">{parseInline(line.slice(2))}</li>;
     return <p key={i} className="md-p">{parseInline(line)}</p>;
@@ -45,23 +66,28 @@ export function ArchitectPortfolio() {
   const [prompt, setPrompt] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  const insertEmoji = (emoji) => {
+    setMessage(prev => prev + emoji);
+  };
   
   const [message, setMessage] = useState('');
   const chatEndRef = useRef(null);
   const [showBanner] = useState(true); 
-  const [scrollSpeed] = useState(20); 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
   const [isChatExpanded, setIsChatExpanded] = useState(false);
 
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
   const [showBootOverlay, setShowBootOverlay] = useState(false);
-  // Add this line with your other useRef hooks
-const aiResponseRef = useRef(null);
-
+  
+  const aiResponseRef = useRef(null);
   const prevLengthRef = useRef(0);
+
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
 
   const [visitorId] = useState(() => {
     let vid = localStorage.getItem('vpk_visitor_id');
@@ -157,22 +183,62 @@ const aiResponseRef = useRef(null);
     const onConnect = () => socket.emit('join_visitor', { visitorId });
     socket.on('connect', onConnect);
     
-    socket.on('admin_msg_received', (msg) => {
-      setChatLog(prev => [...prev, { type: 'received', sender: 'admin', text: msg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-    });
+    const onAdminMsg = (data) => {
+      const isObj = typeof data === 'object';
+      setChatLog(prev => [...prev, { 
+        _id: isObj ? data._id : `msg_${Date.now()}`,
+        type: 'received', 
+        sender: 'admin', 
+        text: isObj ? data.message : data, 
+        time: cleanTimestamp(isObj ? data.timestamp : getCleanTime()),
+        reaction: isObj ? data.reaction : null
+      }]);
+    };
+
+    const onBotReply = (data) => {
+      setChatLog(prev => [...prev, { 
+        _id: data._id || `bot_${Date.now()}`,
+        type: 'received', 
+        sender: 'bot', 
+        text: data.message, 
+        time: cleanTimestamp(data.timestamp || getCleanTime()),
+        reaction: null
+      }]);
+    };
+
+    const onMsgSaved = (data) => {
+      setChatLog(prev => {
+        const updated = [...prev];
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (updated[i].type === 'sent' && updated[i].text === data.message && updated[i]._id?.startsWith('temp')) {
+            updated[i]._id = data._id;
+            updated[i].time = cleanTimestamp(data.timestamp);
+            break;
+          }
+        }
+        return updated;
+      });
+    };
+
+    const onReaction = (data) => {
+      setChatLog(prev => prev.map(msg => msg._id === data.messageId ? { ...msg, reaction: data.reaction } : msg));
+    };
     
-    socket.on('bot_reply', (data) => {
-      setChatLog(prev => [...prev, { type: 'received', sender: 'bot', text: data.message, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-    });
+    socket.on('admin_msg_received', onAdminMsg);
+    socket.on('bot_reply', onBotReply);
+    socket.on('msg_saved_confirmation', onMsgSaved);
+    socket.on('reaction_updated', onReaction);
     
     return () => { 
       socket.off('connect', onConnect); 
-      socket.off('admin_msg_received'); 
-      socket.off('bot_reply');
+      socket.off('admin_msg_received', onAdminMsg); 
+      socket.off('bot_reply', onBotReply);
+      socket.off('msg_saved_confirmation', onMsgSaved);
+      socket.off('reaction_updated', onReaction);
     };
   }, [visitorId]);
 
-const handleAiSubmit = async (e) => {
+  const handleAiSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
@@ -192,7 +258,6 @@ const handleAiSubmit = async (e) => {
       const data = await response.json();
       if(response.ok) {
         setAiResponse(data.response);
-        // --- UPGRADE: Auto-scroll for BOTH laptop and mobile ---
         setTimeout(() => {
           if (aiResponseRef.current) {
             aiResponseRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -207,7 +272,7 @@ const handleAiSubmit = async (e) => {
     setIsAiLoading(false);
     setPrompt('');
   };
-
+  
   const handleSendMessage = () => {
     if (!message.trim()) return;
 
@@ -216,88 +281,69 @@ const handleAiSubmit = async (e) => {
       return;
     }
 
+    const tempId = `temp_${Date.now()}`;
     socket.emit('stream_secure_msg', { visitorId, message }); 
-    setChatLog((prev) => [...prev, { type: 'sent', text: message, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    setChatLog((prev) => [...prev, { _id: tempId, type: 'sent', text: message, time: getCleanTime(), reaction: null }]);
     setMessage('');
+    setShowEmojiPicker(false);
+  };
+
+  const handleReact = (messageId, reaction) => {
+    if(!messageId || messageId.startsWith('temp')) return; 
+    socket.emit('react_to_msg', { messageId, reaction, roomId: visitorId });
+    setChatLog(prev => prev.map(msg => msg._id === messageId ? { ...msg, reaction: reaction } : msg));
+    setHoveredMsgId(null);
   };
   
   return (
     <div className="dashboard-layout">
-      {/* =========================================
-          GLOBAL INLINE STYLES FOR COMPONENTS
-          ========================================= */}
       <style dangerouslySetInnerHTML={{ __html: `
-        .wa-widget { position: relative; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid rgba(255,255,255,0.1); background: #050a15; font-family: 'Segoe UI', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
-        .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: rgba(255, 255, 255, 0.03); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 6px; }
-        
+        .wa-widget { position: relative; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; height: 550px; background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(5, 10, 21, 0.95)); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); margin-top: 10px; font-family: 'Inter', sans-serif; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; max-width: 100%; box-sizing: border-box; }
+        .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.8rem; font-weight: 900; color: rgba(255, 255, 255, 0.02); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 8px; }
         .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; height: 100dvh !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; }
-        
-        .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.95); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .wa-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .wa-header-text h3 { margin: 0; color: #e9edef; font-size: 1rem; }
-        .wa-header-text p { margin: 0; color: #8696a0; font-size: 0.8rem; }
-        .wa-body { position: relative; z-index: 1; flex: 1; overflow-y: auto; padding: 20px; background-color: transparent; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; }
+        .wa-avatar-container { position: relative; flex-shrink: 0; }
+        .wa-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid #0f172a; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
+        .wa-header-text { flex: 1; min-width: 0; }
+        .wa-header-text h3 { margin: 0; color: #f8fafc; font-size: 1.1rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wa-header-text p { margin: 0; color: #94a3b8; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .chat-expand-btn { flex-shrink: 0; margin-left: auto; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: all 0.3s ease; z-index: 10; }
+        .chat-expand-btn:hover { background: #3b82f6; border-color: #3b82f6; transform: scale(1.08); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+        .wa-body { position: relative; z-index: 1; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: transparent; background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 24px 24px; display: flex; flex-direction: column; gap: 18px; }
         .wa-body::-webkit-scrollbar { width: 6px; }
-        .wa-body::-webkit-scrollbar-thumb { background: #374045; border-radius: 10px; }
-        .wa-bubble { position: relative; z-index: 2; padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 0.95rem; line-height: 1.4; color: #e9edef; animation: popIn 0.2s ease forwards;}
-        .wa-sent { background: #3b82f6; align-self: flex-end; border-top-right-radius: 2px; margin-right: 4px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);}
-        .wa-received { background: #1e293b; align-self: flex-start; border-top-left-radius: 2px; margin-left: 4px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
-        .wa-time { font-size: 0.65rem; color: rgba(255,255,255,0.6); float: right; margin-left: 10px; margin-top: 4px; }
-        .wa-footer { position: relative; z-index: 2; padding: 12px; background: rgba(15, 23, 42, 0.95); display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .wa-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 18px; border-radius: 24px; outline: none; transition: 0.3s;}
-        .wa-input:focus { background: rgba(255,255,255,0.1); border-color: #3b82f6;}
-        .wa-btn { background: #3b82f6; color: white; border: none; width: 42px; height: 42px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: 0.2s;}
-        .wa-btn:hover { transform: scale(1.05); background: #2563eb;}
+        .wa-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; overflow-wrap: break-word; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .wa-sent { background: linear-gradient(135deg, #2563eb, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; }
+        .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
+        .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
+        
+        /* REACTION SYSTEM CSS */
+        .msg-emoji-trigger { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s ease; font-size: 0.8rem; z-index: 20; }
+        .bubble-wrapper:hover .msg-emoji-trigger { opacity: 1; }
+        .msg-emoji-trigger:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-50%) scale(1.1); }
+        .reaction-menu { position: absolute; top: -38px; background: rgba(30, 41, 59, 0.95); padding: 6px 12px; border-radius: 20px; display: flex; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); z-index: 50; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .reaction-menu button { background: transparent; border: none; font-size: 1.3rem; cursor: pointer; transition: transform 0.2s ease; padding: 0; outline: none;}
+        .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
+        .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
+
+        .wa-footer { position: relative; z-index: 2; padding: 15px 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .wa-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 14px 20px; border-radius: 30px; outline: none; font-size: 1rem; transition: all 0.3s ease; }
+        .wa-input:focus { background: rgba(255,255,255,0.1); border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        .wa-btn { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); transition: all 0.3s ease; flex-shrink: 0; }
+        .wa-btn:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); }
+        @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes customSpinner { to { transform: rotate(360deg); } }
 
-        .chat-expand-btn {
-          margin-left: auto;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          color: #fff;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.2rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          z-index: 10;
-        }
-        .chat-expand-btn:hover {
-          background: #3b82f6;
-          border-color: #3b82f6;
-          transform: scale(1.05);
-        }
-
-        /* UPGRADED: Mobile Specific Overrides */
         @media (max-width: 1024px) {
+          .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
-          
-          /* FIXED: Force fixed positioning so it never scrolls away */
-          .top-nav-glass { 
-            position: fixed !important;
-            top: 85px !important;
-            left: 5% !important;
-            z-index: 9998 !important;
-            display: flex !important; 
-            flex-direction: column !important;
-            gap: 12px !important;
-            padding: 15px !important;
-            margin: 0 !important; 
-            width: 90% !important;
-          }
-          .top-nav-links { 
-            display: flex !important; 
-            width: 100% !important;
-            justify-content: center !important;
-            flex-wrap: wrap !important;
-            gap: 15px !important;
-          } 
+          .top-nav-glass { position: fixed !important; top: 85px !important; left: 5% !important; z-index: 9998 !important; display: flex !important; flex-direction: column !important; gap: 12px !important; padding: 15px !important; margin: 0 !important; width: 90% !important; }
+          .top-nav-links { display: flex !important; width: 100% !important; justify-content: center !important; flex-wrap: wrap !important; gap: 15px !important; } 
           .top-nav-link { font-size: 0.85rem !important; }
           .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
+          .wa-widget { height: 75vh; border-radius: 16px; } 
         }
       `}} />
 
@@ -317,23 +363,16 @@ const handleAiSubmit = async (e) => {
             padding: '50px 40px', borderRadius: '32px', textAlign: 'center', maxWidth: '420px',
             color: isDarkMode ? '#f8fafc' : '#0f172a', position: 'relative'
           }}>
-            <button 
-              onClick={() => setShowBootOverlay(false)}
-              style={{ position: 'absolute', top: '15px', right: '20px', background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', opacity: 0.6 }}
-            >✕</button>
-            <div style={{
-              width: '45px', height: '45px', border: '4px solid #3b82f6', borderTopColor: 'transparent',
-              borderRadius: '50%', animation: 'customSpinner 1s linear infinite', margin: '0 auto 25px auto'
-            }}></div>
+            <button onClick={() => setShowBootOverlay(false)} style={{ position: 'absolute', top: '15px', right: '20px', background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', opacity: 0.6 }}>✕</button>
+            <div style={{ width: '45px', height: '45px', border: '4px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'customSpinner 1s linear infinite', margin: '0 auto 25px auto' }}></div>
             <h2 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '12px', letterSpacing: '-0.5px' }}>Initializing Server</h2>
             <p style={{ fontWeight: '600', opacity: 0.8, lineHeight: '1.6', fontSize: '0.95rem' }}>
-              The secure architecture is waking up from its standby state. Please hold on, connection establishing shortly...
+              The secure architecture is waking up from its standby state. Please hold on...
             </p>
           </div>
         </div>
       )}
-
-      {/* Hide controls if chat is expanded so they don't cover the close button */}
+      
       {!isChatExpanded && (
         <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
@@ -387,28 +426,25 @@ const handleAiSubmit = async (e) => {
             />
           </form>
         </nav>
-{isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#3b82f6', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
-{aiResponse && !isAiLoading && (
-  <div 
-    ref={aiResponseRef} 
-    className="ai-response-window ai-jump-target" 
-    style={{ 
-      margin: '0 auto 30px auto', 
-      maxWidth: '1300px', 
-      width: '96%'
-    }}
-  >
-    <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-      <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-        Gemini Agent Output
-      </span>
-      <button className="ai-close-btn" onClick={() => setAiResponse('')} title="Clear response">✕</button>
-    </div>
-    <div style={{ color: isDarkMode ? '#e1e1e6' : '#334155' }}>
-      {renderMarkdown(aiResponse)}
-    </div>
-  </div>
-)}
+        
+        {isAiLoading && <div className="loading-text" style={{ padding: '0 28px 20px 28px', color: '#3b82f6', fontWeight: '600' }}><div className="loading-dot"></div> Analyzing query infrastructure...</div>}
+        {aiResponse && !isAiLoading && (
+          <div 
+            ref={aiResponseRef} 
+            className="ai-response-window ai-jump-target" 
+            style={{ margin: '0 auto 30px auto', maxWidth: '1300px', width: '96%' }}
+          >
+            <div className="ai-response-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+              <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Gemini Agent Output
+              </span>
+              <button className="ai-close-btn" onClick={() => setAiResponse('')} title="Clear response">✕</button>
+            </div>
+            <div style={{ color: isDarkMode ? '#e1e1e6' : '#334155' }}>
+              {renderMarkdown(aiResponse)}
+            </div>
+          </div>
+        )}
 
         <div className="hero-section">
           <h1>Welcome to my Engineering Portfolio.</h1>
@@ -454,13 +490,10 @@ const handleAiSubmit = async (e) => {
                     <div className="article-meta">
                       <span className="article-date">{new Date(article.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
-                    
                     <h3 className="article-title">{article.title}</h3>
-                    
                     <p className="article-snippet">
                       {article.content.substring(0, 150).replace(/[#*`>]/g, '')}...
                     </p>
-
                     <div className="article-stats">
                       <span className="stat-item">❤️ {article.likes || 0}</span>
                       <span className="stat-item">💬 {article.comments?.length || 0}</span>
@@ -476,19 +509,25 @@ const handleAiSubmit = async (e) => {
             </div>
           </section>
 
-          <section id="contact" style={{ display: 'flex', flexDirection: 'column', marginTop: '40px' }}>
-            <h2 style={{ color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center' }}>
-              <span className="live-dot" style={{ background: isBackendReady ? '#00a884' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isBackendReady ? '0 0 10px rgba(0, 168, 132, 0.5)' : 'none', animation: isBackendReady ? 'pulse 2s infinite' : 'none' }}></span>
+          <section id="contact" style={{ display: 'flex', flexDirection: 'column', marginTop: '40px', paddingBottom: '40px' }}>
+            <h2 style={{ color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+              <span className="live-dot" style={{ background: isBackendReady ? '#22c55e' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isBackendReady ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none', animation: isBackendReady ? 'pulse 2s infinite' : 'none' }}></span>
               Direct Secure Line
             </h2>
+            
             <div className={`wa-widget ${isChatExpanded ? 'expanded-chat' : ''}`}>
               <div className="wa-header">
-                <div className="wa-avatar" style={{ background: '#6b7c85', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
+                <div className="wa-avatar-container">
+                  <img src="/profile.png" alt="Venkata Pavan Kumar" className="wa-avatar" />
+                  <span className="status-dot" style={{ background: isBackendReady ? '#22c55e' : '#f59e0b', boxShadow: isBackendReady ? '0 0 8px rgba(34, 197, 94, 0.6)' : 'none' }}></span>
+                </div>
                 <div className="wa-header-text">
                   <h3>Venkata Pavan Kumar</h3>
-                  <p>System Architect • {isBackendReady ? 'Available' : 'Booting...'}</p>
+                  <p>
+                    <span style={{ color: isBackendReady ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span> 
+                    {isBackendReady ? 'System Architect Available' : 'System Booting...'}
+                  </p>
                 </div>
-                
                 <button 
                   className="chat-expand-btn"
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
@@ -500,34 +539,84 @@ const handleAiSubmit = async (e) => {
 
               <div className="wa-body">
                 <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-                  <span style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.05)', color: '#8696a0', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem' }}>
-                    End-to-end encrypted connection
+                  <span style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600', letterSpacing: '0.5px' }}>
+                    🔒 End-to-end encrypted connection
                   </span>
                 </div>
-                {chatLog.length === 0 && <div style={{ textAlign: 'center', color: '#8696a0', fontSize: '0.9rem', marginTop: '20px', position: 'relative', zIndex: 2 }}>Send a message to connect securely.</div>}
+                
+                {chatLog.length === 0 && <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.95rem', marginTop: '30px', fontWeight: '500' }}>Send a message to connect securely.</div>}
                 
                 {chatLog.map((log, i) => (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                  <div 
+                    key={i} 
+                    className="bubble-wrapper"
+                    style={{ display: 'flex', flexDirection: 'column', width: '100%', position: 'relative', cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredMsgId(log._id)}
+                    onMouseLeave={() => setHoveredMsgId(null)}
+                    onClick={() => setHoveredMsgId(hoveredMsgId === log._id ? null : log._id)}
+                  >
                     <div className={`wa-bubble ${log.type === 'sent' ? 'wa-sent' : 'wa-received'}`}>
+                        {log._id && !log._id.includes('temp') && (
+                            <button 
+                                className="msg-emoji-trigger" 
+                                style={{ [log.type === 'sent' ? 'left' : 'right']: '-40px' }}
+                                onClick={(e) => { e.stopPropagation(); setHoveredMsgId(hoveredMsgId === log._id ? null : log._id); }}
+                            >
+                                +
+                            </button>
+                        )}
+
+                        {hoveredMsgId === log._id && log._id && !log._id.includes('temp') && (
+                            <div className="reaction-menu" style={{ [log.type === 'sent' ? 'right' : 'left']: '10px' }}>
+                                {quickReactions.map(emoji => (
+                                    <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(log._id, emoji); }}>{emoji}</button>
+                                ))}
+                            </div>
+                        )}
+
                       {log.type === 'received' && (
-                        <div style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: '900', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {log.sender === 'bot' ? 'Subhams Networks' : 'Venkata Pavan Kumar'}
+                        <div style={{ fontSize: '0.7rem', color: '#60a5fa', fontWeight: '900', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {log.sender === 'bot' ? 'Subhams AI Agent' : 'Venkata Pavan Kumar'}
                         </div>
                       )}
                       {log.text}
                       <span className="wa-time">{log.time}</span>
+
+                      {log.reaction && (
+                          <div className="msg-reaction" style={{ [log.type === 'sent' ? 'right' : 'left']: '5px' }}>
+                              {log.reaction}
+                          </div>
+                      )}
                     </div>
                   </div>
                 ))}
                 <div ref={chatEndRef} />
               </div>
 
-              <div className="wa-footer">
+              <div className="wa-footer" style={{ position: 'relative' }}>
+                <button 
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+                  style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', outline: 'none', padding: '0 5px' }}
+                  title="Insert Emoji"
+                >
+                  +
+                </button>
+
+                {showEmojiPicker && (
+                  <div style={{ position: 'absolute', bottom: '75px', left: '20px', background: 'rgba(15,23,42,0.95)', padding: '12px', borderRadius: '16px', display: 'flex', gap: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 100 }}>
+                    {['👍', '❤️', '😂', '🔥', '👀', '✅', '🚀', '💯'].map(emoji => (
+                      <button key={emoji} onClick={() => insertEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', transition: '0.2s' }}>
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <input 
                   className="wa-input" 
                   value={message} 
                   onChange={e => setMessage(e.target.value)} 
-                  placeholder="Type a message..." 
+                  placeholder="Type a message to Pavan..." 
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
                 />
                 <button onClick={handleSendMessage} className="wa-btn">➤</button>
@@ -589,7 +678,7 @@ export function ArticleView() {
     setIsSubmitting(true);
 
     try {
-const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
+      const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: commentName, text: commentText, visitorId })
@@ -719,6 +808,10 @@ export function AdminDashboard() {
   const [articleTitle, setArticleTitle] = useState('');
   const [articleContent, setArticleContent] = useState('');
 
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); 
+  const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
+
   useEffect(() => {
     if (messagesEndRef.current && adminView === 'chats') {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -734,21 +827,22 @@ export function AdminDashboard() {
       setIsConnected(true);
       socket.emit('join_admin');
     };
+    const onDisconnect = () => setIsConnected(false);
 
     const onAdminConfirmation = (payload) => {
       if (payload && payload.offlineHistory) {
-        setConversations(prev => {
-          const updatedConversations = { ...prev };
-          Object.keys(payload.offlineHistory).forEach((roomId) => {
-            const backendMsgs = payload.offlineHistory[roomId];
-            updatedConversations[roomId] = backendMsgs.map(msg => ({
-              sender: msg.sender === 'Visitor' ? 'visitor' : 'admin',
-              text: msg.message,
-              time: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }));
-          });
-          return updatedConversations;
+        const updatedConversations = {};
+        Object.keys(payload.offlineHistory).forEach((roomId) => {
+          const backendMsgs = payload.offlineHistory[roomId];
+          updatedConversations[roomId] = backendMsgs.map(msg => ({
+            _id: msg._id,
+            sender: msg.sender === 'Visitor' ? 'visitor' : 'admin',
+            text: msg.message,
+            time: cleanTimestamp(msg.timestamp), 
+            reaction: msg.reaction
+          }));
         });
+        setConversations(updatedConversations);
       }
     };
 
@@ -756,17 +850,48 @@ export function AdminDashboard() {
       setConversations(prev => ({
         ...prev,
         [data.roomId]: [...(prev[data.roomId] || []), { 
+          _id: data._id,
           sender: 'visitor', 
           text: data.message, 
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+          time: cleanTimestamp(data.timestamp), 
+          reaction: data.reaction 
         }]
       }));
     };
 
+    const onReaction = (data) => {
+      setConversations(prev => {
+        const roomHistory = prev[data.roomId];
+        if (!roomHistory) return prev;
+        return {
+          ...prev,
+          [data.roomId]: roomHistory.map(msg => msg._id === data.messageId ? { ...msg, reaction: data.reaction } : msg)
+        };
+      });
+    };
+
+    const onAdminSaved = (data) => {
+      setConversations(prev => {
+        const roomHistory = prev[data.targetRoom];
+        if (!roomHistory) return prev;
+        const updatedRoom = [...roomHistory];
+        for(let i = updatedRoom.length - 1; i >= 0; i--) {
+          if (updatedRoom[i].sender === 'admin' && updatedRoom[i].text === data.message && updatedRoom[i]._id?.startsWith('temp')) {
+              updatedRoom[i]._id = data._id;
+              updatedRoom[i].time = cleanTimestamp(data.timestamp); 
+              break;
+          }
+        }
+        return { ...prev, [data.targetRoom]: updatedRoom };
+      });
+    };
+
     socket.on('connect', onConnect);
-    socket.on('disconnect', () => setIsConnected(false));
+    socket.on('disconnect', onDisconnect);
     socket.on('admin_joined_confirmation', onAdminConfirmation);
     socket.on('new_visitor_msg', onNewVisitorMsg);
+    socket.on('reaction_updated', onReaction);
+    socket.on('admin_msg_saved', onAdminSaved);
 
     if (socket.connected) {
       setIsConnected(true);
@@ -775,26 +900,32 @@ export function AdminDashboard() {
 
     return () => {
       socket.off('connect', onConnect);
-      socket.off('disconnect');
+      socket.off('disconnect', onDisconnect);
       socket.off('admin_joined_confirmation', onAdminConfirmation);
       socket.off('new_visitor_msg', onNewVisitorMsg);
+      socket.off('reaction_updated', onReaction);
+      socket.off('admin_msg_saved', onAdminSaved);
     };
   }, []);
 
   const sendReply = (roomId) => {
     const text = replyInputs[roomId];
     if (!text || !text.trim()) return;
+    
     socket.emit('admin_reply', { targetRoom: roomId, message: text });
     
     setConversations(prev => ({
       ...prev,
       [roomId]: [...(prev[roomId] || []), { 
+        _id: `temp_${Date.now()}`, 
         sender: 'admin', 
         text: text, 
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        time: getCleanTime(), 
+        reaction: null
       }]
     }));
     setReplyInputs(prev => ({ ...prev, [roomId]: '' }));
+    setShowEmojiPicker(false);
   };
 
   const closeConversation = (roomId) => {
@@ -802,6 +933,27 @@ export function AdminDashboard() {
     delete updatedChats[roomId];
     setConversations(updatedChats);
     if (activeRoom === roomId) setActiveRoom(null);
+  };
+
+  const handleReact = (messageId, reaction, roomId) => {
+    if(!messageId || messageId.startsWith('temp')) return; 
+    
+    socket.emit('react_to_msg', { messageId, reaction, roomId });
+    
+    setConversations(prev => {
+      const roomHistory = prev[roomId];
+      if (!roomHistory) return prev;
+      return {
+        ...prev,
+        [roomId]: roomHistory.map(msg => msg._id === messageId ? { ...msg, reaction: reaction } : msg)
+      };
+    });
+
+    setHoveredMsgId(null);
+  };
+
+  const insertEmoji = (emoji) => {
+    setReplyInputs(prev => ({ ...prev, [activeRoom]: (prev[activeRoom] || '') + emoji }));
   };
 
   const handlePublishArticle = async (e) => {
@@ -825,34 +977,64 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="admin-wrapper">
+    <div className="admin-wrapper" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#050a15', fontFamily: "'Inter', sans-serif" }}>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        .admin-sidebar { width: 350px; flex-shrink: 0; background: rgba(15, 23, 42, 0.95); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; z-index: 10; backdrop-filter: blur(20px); }
+        .admin-main { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(5, 10, 21, 1) 100%); }
+        .room-item:hover { background: rgba(255,255,255,0.05); }
+        .room-item.active { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; }
+        
+        .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; overflow-wrap: break-word; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .wa-sent { background: linear-gradient(135deg, #2563eb, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; }
+        .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
+        .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
+
+        .msg-emoji-trigger { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s ease; font-size: 0.8rem; z-index: 20; }
+        .bubble-wrapper:hover .msg-emoji-trigger { opacity: 1; }
+        .msg-emoji-trigger:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-50%) scale(1.1); }
+
+        .reaction-menu { position: absolute; top: -38px; background: rgba(30, 41, 59, 0.95); padding: 6px 12px; border-radius: 20px; display: flex; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); z-index: 50; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .reaction-menu button { background: transparent; border: none; font-size: 1.3rem; cursor: pointer; transition: transform 0.2s ease; padding: 0; outline: none;}
+        .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
+        .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
+
+        @media (max-width: 768px) {
+          .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
+          .admin-wrapper { flex-direction: column; }
+          .admin-sidebar { width: 100%; height: ${activeRoom ? 'auto' : '100%'}; flex: ${activeRoom ? 'none' : '1'}; display: ${activeRoom ? 'none' : 'flex'}; border-right: none; }
+          .admin-main { display: ${activeRoom ? 'flex' : 'none'}; height: 100%; width: 100%; }
+          .chat-window { padding: 20px 5% !important; }
+        }
+      `}} />
+
       <aside className="admin-sidebar">
-        <div className="admin-nav-tabs">
-          <button className={`admin-tab ${adminView === 'chats' ? 'active-tab' : ''}`} onClick={() => setAdminView('chats')}>Live Chats</button>
-          <button className={`admin-tab ${adminView === 'write' ? 'active-tab' : ''}`} onClick={() => setAdminView('write')}>Write Article</button>
+        <div className="admin-nav-tabs" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <button className={`admin-tab ${adminView === 'chats' ? 'active-tab' : ''}`} onClick={() => setAdminView('chats')} style={{ flex: 1, padding: '18px', background: adminView === 'chats' ? 'rgba(255,255,255,0.1)' : 'transparent', color: adminView === 'chats' ? '#fff' : '#94a3b8', border: 'none', borderBottom: adminView === 'chats' ? '2px solid #3b82f6' : 'none', cursor: 'pointer', fontWeight: 'bold' }}>Live Chats</button>
+          <button className={`admin-tab ${adminView === 'write' ? 'active-tab' : ''}`} onClick={() => setAdminView('write')} style={{ flex: 1, padding: '18px', background: adminView === 'write' ? 'rgba(255,255,255,0.1)' : 'transparent', color: adminView === 'write' ? '#fff' : '#94a3b8', border: 'none', borderBottom: adminView === 'write' ? '2px solid #3b82f6' : 'none', cursor: 'pointer', fontWeight: 'bold' }}>Write Article</button>
         </div>
 
         {adminView === 'chats' && (
           <>
-            <div className="sidebar-header">
-              <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: '800' }}>Active Tunnels</h2>
-              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isConnected ? '#00a884' : '#ef4444', boxShadow: isConnected ? '0 0 10px rgba(0, 168, 132, 0.5)' : 'none' }} title={isConnected ? "Online" : "Offline"}></div>
+            <div className="sidebar-header" style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '800', color: '#f8fafc' }}>Active Tunnels</h2>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isConnected ? '#22c55e' : '#ef4444', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none' }} title={isConnected ? "Online" : "Offline"}></div>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {Object.keys(conversations).length === 0 ? (
-                  <div style={{ padding: '20px', color: '#8696a0', textAlign: 'center', fontWeight: '600' }}>No active users.</div>
+                  <div style={{ padding: '30px', color: '#64748b', textAlign: 'center', fontWeight: '600' }}>No active users detected.</div>
               ) : (
                 Object.keys(conversations).map(roomId => {
                   const lastMsg = conversations[roomId][conversations[roomId].length - 1];
                   return (
-                    <button key={roomId} className={`room-item ${activeRoom === roomId ? 'active' : ''}`} onClick={() => setActiveRoom(roomId)}>
-                      <div className="avatar">👤</div>
+                    <button key={roomId} className={`room-item ${activeRoom === roomId ? 'active' : ''}`} onClick={() => setActiveRoom(roomId)} style={{ width: '100%', padding: '15px 20px', background: activeRoom === roomId ? 'rgba(59,130,246,0.1)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', transition: '0.2s', textAlign: 'left' }}>
+                      <div className="avatar" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ fontWeight: '800' }}>{roomId.replace('user_', 'User ')}</span>
-                          <span style={{ fontSize: '0.75rem', color: '#8696a0', fontWeight: 'bold' }}>{lastMsg?.time}</span>
+                          <span style={{ fontWeight: '800', color: '#f8fafc' }}>{roomId.replace('user_', 'User ')}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 'bold' }}>{lastMsg?.time}</span>
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: '#8696a0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '500' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '500' }}>
                           {lastMsg?.sender === 'admin' ? '✓✓ ' : ''}{lastMsg?.text}
                         </div>
                       </div>
@@ -867,85 +1049,148 @@ export function AdminDashboard() {
 
       <main className="admin-main">
         {adminView === 'write' ? (
-          <div className="write-article-container">
-            <h2 style={{ color: '#0f172a', marginBottom: '25px', fontWeight: '900', fontSize: '2.5rem', letterSpacing: '-1px' }}>Draft New Architecture Post</h2>
+          <div className="write-article-container" style={{ padding: '40px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+            <h2 style={{ color: '#f8fafc', marginBottom: '25px', fontWeight: '900', fontSize: '2.5rem', letterSpacing: '-1px' }}>Draft New Architecture Post</h2>
             <form onSubmit={handlePublishArticle} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <input className="admin-input-title" value={articleTitle} onChange={e => setArticleTitle(e.target.value)} placeholder="New post title here..." />
-              <textarea className="admin-input-content" value={articleContent} onChange={e => setArticleContent(e.target.value)} placeholder="Write your content in Markdown... (e.g. ## Introduction)" />
-              <button type="submit" className="admin-publish-btn" style={{ background: '#2563eb', color: '#ffffff', fontSize: '1.2rem', fontWeight: '800', padding: '18px', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: '0.2s', boxShadow: '0 8px 20px rgba(37,99,235,0.3)' }}>Publish Post to Live Portfolio</button>
+              <input className="admin-input-title" value={articleTitle} onChange={e => setArticleTitle(e.target.value)} placeholder="New post title here..." style={{ background: 'transparent', border: 'none', borderBottom: '2px solid rgba(255,255,255,0.2)', fontSize: '2rem', color: 'white', padding: '10px 0', marginBottom: '20px', outline: 'none', fontWeight: 'bold' }} />
+              <textarea className="admin-input-content" value={articleContent} onChange={e => setArticleContent(e.target.value)} placeholder="Write your content in Markdown... (e.g. ## Introduction)" style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '20px', color: 'white', fontSize: '1.1rem', fontFamily: 'monospace', outline: 'none', resize: 'none', marginBottom: '20px' }} />
+              <button type="submit" className="admin-publish-btn" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#ffffff', fontSize: '1.2rem', fontWeight: '800', padding: '18px', border: 'none', borderRadius: '12px', cursor: 'pointer', transition: '0.2s', boxShadow: '0 8px 20px rgba(37,99,235,0.3)' }}>Publish Post to Live Portfolio</button>
             </form>
           </div>
         ) : (
               activeRoom ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  <div className="avatar" style={{ width: '45px', height: '45px', background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,1)', color: '#0f172a' }}>👤</div>
+                  <div className="avatar" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
                   <div>
-                    <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: '900' }}>{activeRoom.replace('user_', 'User ')}</h2>
-                    <span style={{ fontSize: '0.85rem', color: '#00a884', fontWeight: 'bold' }}>Online</span>
+                    <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#f8fafc', fontWeight: '900' }}>{activeRoom.replace('user_', 'User ')}</h2>
+                    <span style={{ fontSize: '0.85rem', color: '#22c55e', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%'}}></span>
+                      Active Tunnel
+                    </span>
                   </div>
                 </div>
                 
                 <button 
                   onClick={() => setActiveRoom(null)} 
                   style={{ 
-                    background: 'rgba(239,68,68,0.1)', 
+                    background: 'rgba(239,68,68,0.15)', 
                     border: '1px solid rgba(239,68,68,0.3)', 
                     color: '#ef4444', 
-                    padding: '8px 16px', 
+                    padding: '10px 18px', 
                     borderRadius: '20px', 
                     cursor: 'pointer', 
                     fontWeight: '800',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    transition: '0.2s'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.25)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
                 >
                   ✕ Close Chat
                 </button>
               </div>
+              
               <div className="chat-window" style={{ flex: 1, padding: '30px 10%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                 <div style={{ textAlign: 'center', margin: '15px 0' }}>
-                  <span style={{ background: 'rgba(255,255,255,0.8)', color: '#475569', padding: '8px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,1)' }}>
-                    End-to-end encrypted session
+                  <span style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    🔒 Secure Admin Channel
                   </span>
                 </div>
 
                 {conversations[activeRoom].map((m, i) => (
-                  <div key={i} className={`bubble-wrapper ${m.sender === 'admin' ? 'sent-wrapper' : 'received-wrapper'}`} style={{ display: 'flex', width: '100%', marginBottom: '10px', justifyContent: m.sender === 'admin' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ 
-                      padding: '12px 18px', borderRadius: '16px', maxWidth: '65%', fontSize: '1rem', fontWeight: '500', lineHeight: '1.5',
-                      background: m.sender === 'admin' ? '#3b82f6' : 'rgba(255,255,255,0.9)', 
-                      color: m.sender === 'admin' ? 'white' : '#0f172a',
-                      border: m.sender === 'admin' ? 'none' : '1px solid rgba(255,255,255,1)',
-                      boxShadow: m.sender === 'admin' ? '0 10px 25px rgba(59,130,246,0.3)' : '0 10px 25px rgba(0,0,0,0.05)'
-                    }}>
-                      <span>{m.text}</span>
-                      <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '5px', textAlign: 'right', fontWeight: 'bold' }}>{m.time}</div>
+                  <div 
+                    key={i} 
+                    className="bubble-wrapper"
+                    style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '16px', position: 'relative', cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredMsgId(m._id)}
+                    onMouseLeave={() => setHoveredMsgId(null)}
+                    onClick={() => setHoveredMsgId(hoveredMsgId === m._id ? null : m._id)}
+                  >
+                    
+                    {/* EXACTLY CLONED FROM USER SIDE FOR FLAWLESS ADMIN UI */}
+                    <div className={`wa-bubble ${m.sender === 'admin' ? 'wa-sent' : 'wa-received'}`}>
+
+                      {m._id && !m._id.includes('temp') && (
+                          <button 
+                              className="msg-emoji-trigger" 
+                              style={{ [m.sender === 'admin' ? 'left' : 'right']: '-40px' }}
+                              onClick={(e) => { e.stopPropagation(); setHoveredMsgId(hoveredMsgId === m._id ? null : m._id); }}
+                          >
+                              +
+                          </button>
+                      )}
+
+                      {hoveredMsgId === m._id && m._id && !m._id.includes('temp') && (
+                          <div className="reaction-menu" style={{ [m.sender === 'admin' ? 'right' : 'left']: '10px' }}>
+                              {quickReactions.map(emoji => (
+                                  <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(m._id, emoji, activeRoom); }}>{emoji}</button>
+                              ))}
+                          </div>
+                      )}
+
+                      {m.sender !== 'admin' && (
+                        <div style={{ fontSize: '0.7rem', color: '#60a5fa', fontWeight: '900', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Visitor
+                        </div>
+                      )}
+                      
+                      {m.text}
+                      <span className="wa-time">{m.time}</span>
+                      
+                      {m.reaction && (
+                          <div className="msg-reaction" style={{ [m.sender === 'admin' ? 'right' : 'left']: '5px' }}>
+                              {m.reaction}
+                          </div>
+                      )}
+
                     </div>
                   </div>
                 ))}
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="admin-input-area" style={{ padding: '20px 30px', background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.6)', display: 'flex', gap: '15px' }}>
+              <div className="admin-input-area" style={{ padding: '20px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '15px', position: 'relative' }}>
+                
+                <button 
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+                  style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', outline: 'none', transition: '0.2s', padding: '0 5px' }}
+                  title="Insert Emoji"
+                >
+                  +
+                </button>
+
+                {showEmojiPicker && (
+                  <div style={{ position: 'absolute', bottom: '80px', left: '30px', background: 'rgba(15,23,42,0.95)', padding: '12px', borderRadius: '16px', display: 'flex', gap: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 100 }}>
+                    {['👍', '❤️', '😂', '🔥', '👀', '✅', '🚀', '💯'].map(emoji => (
+                      <button key={emoji} onClick={() => insertEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', transition: '0.2s' }} onMouseOver={(e) => e.target.style.transform = 'scale(1.3)'} onMouseOut={(e) => e.target.style.transform = 'scale(1)'}>
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <input 
                   className="admin-input"
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,1)', color: '#0f172a', padding: '16px 24px', borderRadius: '30px', outline: 'none', fontSize: '1.05rem', fontWeight: '600', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: '#f8fafc', padding: '16px 24px', borderRadius: '30px', outline: 'none', fontSize: '1.05rem', fontWeight: '500', transition: '0.3s' }}
                   value={replyInputs[activeRoom] || ''} 
                   onChange={(e) => setReplyInputs(prev => ({ ...prev, [activeRoom]: e.target.value }))} 
                   onKeyDown={(e) => e.key === 'Enter' && sendReply(activeRoom)} 
-                  placeholder="Type your reply to the user..." 
+                  placeholder="Message the visitor..." 
+                  onFocus={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+                  onBlur={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
                 />
-                <button onClick={() => sendReply(activeRoom)} style={{ background: '#3b82f6', color: 'white', border: 'none', width: '55px', height: '55px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(59,130,246,0.3)' }}>➤</button>
+                <button onClick={() => sendReply(activeRoom)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', border: 'none', width: '55px', height: '55px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(59,130,246,0.4)', transition: '0.2s', flexShrink: 0 }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}>➤</button>
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#475569' }}>
-              <div style={{ width: '80px', height: '80px', background: 'rgba(255,255,255,0.5)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.8)' }}>🛡️</div>
-              <h2 style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', marginBottom: '10px' }}>Secure Admin Hub</h2>
-              <p style={{ fontWeight: '600', fontSize: '1.1rem' }}>Select a user tunnel from the left or switch tabs to publish.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+              <div style={{ width: '90px', height: '90px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', marginBottom: '25px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>🛡️</div>
+              <h2 style={{ fontSize: '2.2rem', fontWeight: '900', color: '#f8fafc', marginBottom: '10px' }}>Secure Admin Hub</h2>
+              <p style={{ fontWeight: '500', fontSize: '1.1rem' }}>Select an active tunnel to establish a secure connection.</p>
             </div>
           )
         )}
