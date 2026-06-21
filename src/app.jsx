@@ -8,7 +8,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 const socket = io(BACKEND_URL);
 
 // ==========================================
-// STRICT TIMEZONE CONTROLLER 
+// STRICT TIMEZONE CONTROLLER (REMOVES SECONDS GLOBALLY)
 // ==========================================
 const getCleanTime = () => {
   try {
@@ -29,17 +29,17 @@ const cleanTimestamp = (ts) => {
 };
 
 // ==========================================
-// CUSTOM AI & DEV.TO STYLE MARKDOWN PARSER
+// CUSTOM AI & DEV.TO STYLE MARKDOWN PARSER (BUG FIX: BOLD HEADINGS)
 // ==========================================
 const parseInline = (text) => {
   const parts = text.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="md-bold">{part.slice(2, -2)}</strong>;
+      return <strong key={i} className="md-bold" style={{ fontWeight: '800' }}>{part.slice(2, -2)}</strong>;
     }
     if (part.startsWith('[') && part.endsWith(')')) {
       const match = part.match(/\[(.*?)\]\((.*?)\)/);
-      if (match) return <a key={i} href={match[2]} target="_blank" rel="noopener noreferrer" className="md-link">{match[1]}</a>;
+      if (match) return <a key={i} href={match[2]} target="_blank" rel="noopener noreferrer" className="md-link" style={{ color: '#3b82f6', textDecoration: 'underline' }}>{match[1]}</a>;
     }
     return part;
   });
@@ -49,13 +49,13 @@ const renderMarkdown = (text) => {
   if (!text) return null;
   const lines = text.split('\n');
   return lines.map((line, i) => {
-    if (!line.trim()) return <div key={i} className="md-spacer" />;
-    if (line.startsWith('# ')) return <h1 key={i} className="md-h1">{parseInline(line.slice(2))}</h1>;
-    if (line.startsWith('## ')) return <h2 key={i} className="md-h2"><strong>{parseInline(line.slice(3))}</strong></h2>;
-    if (line.startsWith('### ')) return <h3 key={i} className="md-h3"><strong>{parseInline(line.slice(4))}</strong></h3>;
-    if (line.startsWith('> ')) return <blockquote key={i} className="md-quote">{parseInline(line.slice(2))}</blockquote>;
-    if (line.startsWith('* ') || line.startsWith('- ')) return <li key={i} className="md-li">{parseInline(line.slice(2))}</li>;
-    return <p key={i} className="md-p">{parseInline(line)}</p>;
+    if (!line.trim()) return <div key={i} className="md-spacer" style={{ height: '10px' }} />;
+    if (line.startsWith('# ')) return <h1 key={i} className="md-h1" style={{ fontWeight: '900', fontSize: '2rem', margin: '20px 0 10px 0' }}>{parseInline(line.slice(2))}</h1>;
+    if (line.startsWith('## ')) return <h2 key={i} className="md-h2" style={{ fontWeight: '900', fontSize: '1.6rem', margin: '18px 0 10px 0' }}>{parseInline(line.slice(3))}</h2>;
+    if (line.startsWith('### ')) return <h3 key={i} className="md-h3" style={{ fontWeight: '900', fontSize: '1.3rem', margin: '15px 0 8px 0' }}>{parseInline(line.slice(4))}</h3>;
+    if (line.startsWith('> ')) return <blockquote key={i} className="md-quote" style={{ borderLeft: '4px solid #3b82f6', paddingLeft: '15px', fontStyle: 'italic', opacity: 0.8, margin: '10px 0' }}>{parseInline(line.slice(2))}</blockquote>;
+    if (line.startsWith('* ') || line.startsWith('- ')) return <li key={i} className="md-li" style={{ marginLeft: '20px', marginBottom: '5px' }}>{parseInline(line.slice(2))}</li>;
+    return <p key={i} className="md-p" style={{ marginBottom: '10px', lineHeight: '1.6' }}>{parseInline(line)}</p>;
   });
 };
 
@@ -78,6 +78,7 @@ export function ArchitectPortfolio() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isConnected, setIsConnected] = useState(socket.connected); // BUG FIX: Track real online status
 
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
@@ -178,10 +179,19 @@ export function ArchitectPortfolio() {
 
   useEffect(() => {
     if (socket.connected) {
+      setIsConnected(true);
       socket.emit('join_visitor', { visitorId });
     }
-    const onConnect = () => socket.emit('join_visitor', { visitorId });
+    
+    const onConnect = () => {
+        setIsConnected(true);
+        socket.emit('join_visitor', { visitorId });
+    };
+
+    const onDisconnect = () => setIsConnected(false);
+    
     socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     
     const onAdminMsg = (data) => {
       const isObj = typeof data === 'object';
@@ -231,6 +241,7 @@ export function ArchitectPortfolio() {
     
     return () => { 
       socket.off('connect', onConnect); 
+      socket.off('disconnect', onDisconnect);
       socket.off('admin_msg_received', onAdminMsg); 
       socket.off('bot_reply', onBotReply);
       socket.off('msg_saved_confirmation', onMsgSaved);
@@ -304,7 +315,7 @@ export function ArchitectPortfolio() {
         .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; }
         .wa-avatar-container { position: relative; flex-shrink: 0; }
         .wa-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid #0f172a; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid #0f172a; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); transition: background 0.3s ease; }
         .wa-header-text { flex: 1; min-width: 0; }
         .wa-header-text h3 { margin: 0; color: #f8fafc; font-size: 1.1rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .wa-header-text p { margin: 0; color: #94a3b8; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 5px; }
@@ -314,7 +325,7 @@ export function ArchitectPortfolio() {
         .wa-body::-webkit-scrollbar { width: 6px; }
         .wa-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
-        .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; overflow-wrap: break-word; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; white-space: pre-wrap; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .wa-sent { background: linear-gradient(135deg, #2563eb, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; }
         .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
         .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
@@ -335,7 +346,12 @@ export function ArchitectPortfolio() {
         .wa-btn:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); }
         @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes customSpinner { to { transform: rotate(360deg); } }
+        
+        /* BUG FIX: FINGER TAP ANIMATION */
+        .finger-indicator { position: absolute; bottom: -30px; right: 5px; font-size: 1.8rem; animation: tapBounce 1s infinite alternate; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; }
+        @keyframes tapBounce { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-10px) scale(1.1); opacity: 0.8; } }
 
+        /* BUG FIX: STRICT MOBILE OVERFLOW & ARTICLE DISPLAY */
         @media (max-width: 1024px) {
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
@@ -343,7 +359,11 @@ export function ArchitectPortfolio() {
           .top-nav-links { display: flex !important; width: 100% !important; justify-content: center !important; flex-wrap: wrap !important; gap: 15px !important; } 
           .top-nav-link { font-size: 0.85rem !important; }
           .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
-          .wa-widget { height: 75vh; border-radius: 16px; } 
+          .wa-widget { height: 80vh; max-height: 600px; border-radius: 16px; max-width: 100vw !important; overflow: hidden; box-sizing: border-box; } 
+          .articles-container, .projects-container { display: flex !important; flex-direction: column !important; width: 100% !important; }
+        }
+        @media (min-width: 1025px) {
+          .finger-indicator { display: none !important; }
         }
       `}} />
 
@@ -378,11 +398,14 @@ export function ArchitectPortfolio() {
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
             {isDarkMode ? '🌙' : '☀️'}
           </button>
+          {/* BUG FIX: FINGER TAP INDICATOR FOR MOBILE */}
           <button 
             className="ui-btn mobile-menu-btn"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{ position: 'relative' }}
           >
             {isMobileMenuOpen ? '✕' : '☰'}
+            {!isMobileMenuOpen && <div className="finger-indicator">👆</div>}
           </button>
         </div>
       )}
@@ -490,10 +513,14 @@ export function ArchitectPortfolio() {
                     <div className="article-meta">
                       <span className="article-date">{new Date(article.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
-                    <h3 className="article-title">{article.title}</h3>
+                    
+                    {/* BOLDED ARTICLE PREVIEW TITLES */}
+                    <h3 className="article-title" style={{ fontWeight: '900' }}>{article.title}</h3>
+                    
                     <p className="article-snippet">
                       {article.content.substring(0, 150).replace(/[#*`>]/g, '')}...
                     </p>
+
                     <div className="article-stats">
                       <span className="stat-item">❤️ {article.likes || 0}</span>
                       <span className="stat-item">💬 {article.comments?.length || 0}</span>
@@ -511,7 +538,8 @@ export function ArchitectPortfolio() {
 
           <section id="contact" style={{ display: 'flex', flexDirection: 'column', marginTop: '40px', paddingBottom: '40px' }}>
             <h2 style={{ color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
-              <span className="live-dot" style={{ background: isBackendReady ? '#22c55e' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isBackendReady ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none', animation: isBackendReady ? 'pulse 2s infinite' : 'none' }}></span>
+              {/* BUG FIX: RELY ON isConnected FOR LIVE DOT */}
+              <span className="live-dot" style={{ background: isConnected ? '#22c55e' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none', animation: isConnected ? 'pulse 2s infinite' : 'none' }}></span>
               Direct Secure Line
             </h2>
             
@@ -519,13 +547,13 @@ export function ArchitectPortfolio() {
               <div className="wa-header">
                 <div className="wa-avatar-container">
                   <img src="/profile.png" alt="Venkata Pavan Kumar" className="wa-avatar" />
-                  <span className="status-dot" style={{ background: isBackendReady ? '#22c55e' : '#f59e0b', boxShadow: isBackendReady ? '0 0 8px rgba(34, 197, 94, 0.6)' : 'none' }}></span>
+                  <span className="status-dot" style={{ background: isConnected ? '#22c55e' : '#f59e0b', boxShadow: isConnected ? '0 0 8px rgba(34, 197, 94, 0.6)' : 'none' }}></span>
                 </div>
                 <div className="wa-header-text">
                   <h3>Venkata Pavan Kumar</h3>
                   <p>
-                    <span style={{ color: isBackendReady ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span> 
-                    {isBackendReady ? 'System Architect Available' : 'System Booting...'}
+                    <span style={{ color: isConnected ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span> 
+                    {isConnected ? 'System Architect Online' : 'Connecting to Server...'}
                   </p>
                 </div>
                 <button 
@@ -678,7 +706,7 @@ export function ArticleView() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
+const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: commentName, text: commentText, visitorId })
@@ -718,7 +746,7 @@ export function ArticleView() {
       
       <article className="dev-article-container">
         <header style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '20px', marginBottom: '40px' }}>
-          <h1 className="article-main-title">{article.title}</h1>
+          <h1 className="article-main-title" style={{ fontWeight: '900' }}>{article.title}</h1>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div className="author-card" style={{ border: 'none', margin: 0, padding: 0 }}>
               <img src="/profile.png" alt="Pavan" className="author-avatar" />
@@ -985,7 +1013,8 @@ export function AdminDashboard() {
         .room-item:hover { background: rgba(255,255,255,0.05); }
         .room-item.active { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; }
         
-        .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; overflow-wrap: break-word; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        /* BUG FIX: PERFECT CLONE OF USER SIDE CHAT BUBBLES FOR ADMIN UI */
+        .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; white-space: pre-wrap; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .wa-sent { background: linear-gradient(135deg, #2563eb, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; }
         .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
         .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
@@ -1018,6 +1047,7 @@ export function AdminDashboard() {
           <>
             <div className="sidebar-header" style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '800', color: '#f8fafc' }}>Active Tunnels</h2>
+              {/* BUG FIX: TIE GREEN DOT TO LIVE SOCKET HEALTH */}
               <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isConnected ? '#22c55e' : '#ef4444', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none' }} title={isConnected ? "Online" : "Offline"}></div>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
