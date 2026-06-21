@@ -577,7 +577,7 @@ export function ArchitectPortfolio() {
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
                   title={isChatExpanded ? "Minimize Chat" : "Expand Chat"}
                 >
-                  {isChatExpanded ? '✕' : '🗖'}
+                  {isChatExpanded ? '✕' : '⛶'}
                 </button>
               </div>
 
@@ -756,19 +756,19 @@ export function ArticleView() {
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={cleanDescription} />
       </Helmet>
-      <nav className="article-nav">
+     <nav className="article-nav">
         <button onClick={() => navigate('/')} className="back-btn">← Back to Portfolio</button>
       </nav>
       
       <article className="dev-article-container">
         <header style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '20px', marginBottom: '40px' }}>
-          <h1 className="article-main-title" style={{ fontWeight: '900' }}>{article.title}</h1>
+          <h1 className="article-main-title">{article.title}</h1>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div className="author-card" style={{ border: 'none', margin: 0, padding: 0 }}>
+            <div className="author-card">
               <img src="/profile.png" alt="Pavan" className="author-avatar" />
               <div className="author-info">
                 <strong>Venkata Pavan Kumar</strong>
-                <span>Posted on {new Date(article.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                <span>Posted on {new Date(article.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
             </div>
             
