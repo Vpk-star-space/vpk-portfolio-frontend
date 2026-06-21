@@ -312,7 +312,7 @@ export function ArchitectPortfolio() {
   
   return (
     <div className="dashboard-layout">
-      <style dangerouslySetInnerHTML={{ __html: `
+     <style dangerouslySetInnerHTML={{ __html: `
         /* 1. PREMIUM WIDGET CONTAINER */
         .wa-widget { position: relative; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; height: 550px; background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(5, 10, 21, 0.95)); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); margin-top: 10px; font-family: 'Inter', sans-serif; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; max-width: 100%; box-sizing: border-box; }
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.8rem; font-weight: 900; color: rgba(255, 255, 255, 0.02); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 8px; }
@@ -320,7 +320,7 @@ export function ArchitectPortfolio() {
         /* BUG FIX 3: EXPANDED CHAT FILLS PERFECTLY */
         .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; max-width: 100vw !important; height: 100vh !important; height: 100dvh !important; max-height: none !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(5, 10, 21, 1)) !important; }
         
-        .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; }
+        .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; box-sizing: border-box; width: 100%; }
         .wa-avatar-container { position: relative; flex-shrink: 0; }
         .wa-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid #0f172a; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); transition: background 0.3s ease; }
@@ -329,7 +329,7 @@ export function ArchitectPortfolio() {
         .wa-header-text p { margin: 0; color: #94a3b8; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 5px; }
         .chat-expand-btn { flex-shrink: 0; margin-left: auto; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: all 0.3s ease; z-index: 10; }
         .chat-expand-btn:hover { background: #3b82f6; border-color: #3b82f6; transform: scale(1.08); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
-        .wa-body { position: relative; z-index: 1; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: transparent; background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 24px 24px; display: flex; flex-direction: column; gap: 18px; }
+        .wa-body { position: relative; z-index: 1; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: transparent; background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 24px 24px; display: flex; flex-direction: column; gap: 18px; width: 100%; box-sizing: border-box; }
         .wa-body::-webkit-scrollbar { width: 6px; }
         .wa-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
@@ -338,6 +338,7 @@ export function ArchitectPortfolio() {
         .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
         .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
         
+        /* REACTION SYSTEM CSS */
         .msg-emoji-trigger { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s ease; font-size: 0.8rem; z-index: 20; }
         .bubble-wrapper:hover .msg-emoji-trigger { opacity: 1; }
         .msg-emoji-trigger:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-50%) scale(1.1); }
@@ -346,19 +347,20 @@ export function ArchitectPortfolio() {
         .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
         .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
 
-        .wa-footer { position: relative; z-index: 2; padding: 15px 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
-        .wa-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 14px 20px; border-radius: 30px; outline: none; font-size: 1rem; transition: all 0.3s ease; }
+        /* BUG FIX: INPUT BUTTON OVERFLOW */
+        .wa-footer { position: relative; z-index: 2; padding: 15px 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); width: 100%; box-sizing: border-box; }
+        .wa-input { flex: 1; min-width: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 14px 20px; border-radius: 30px; outline: none; font-size: 1rem; transition: all 0.3s ease; box-sizing: border-box; }
         .wa-input:focus { background: rgba(255,255,255,0.1); border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
         .wa-btn { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); transition: all 0.3s ease; flex-shrink: 0; }
         .wa-btn:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); }
+        
         @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes customSpinner { to { transform: rotate(360deg); } }
         
-        /* BUG FIX 4: FINGER TAP ANIMATION */
         .finger-indicator { position: absolute; bottom: -30px; right: 5px; font-size: 1.8rem; animation: tapBounce 1s infinite alternate; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; }
         @keyframes tapBounce { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-10px) scale(1.1); opacity: 0.8; } }
 
-        /* BUG FIX 1: STRICT MOBILE OVERFLOW */
+        /* UPGRADED MOBILE MEDIA QUERY TO PREVENT SEND BUTTON OVERFLOW */
         @media (max-width: 1024px) {
           .wa-widget::before { font-size: 1.5rem !important; letter-spacing: 4px !important; white-space: normal !important; text-align: center; padding: 0 20px; line-height: 1.4; width: 90%; }
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
@@ -369,6 +371,11 @@ export function ArchitectPortfolio() {
           .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
           .wa-widget { height: 80vh; max-height: 600px; border-radius: 16px; max-width: 100vw !important; overflow: hidden; box-sizing: border-box; } 
           .articles-container, .projects-container { display: flex !important; flex-direction: column !important; width: 100% !important; }
+          
+          /* PERFECT MOBILE INPUT ALIGNMENT */
+          .wa-footer { padding: 10px 12px !important; gap: 8px !important; }
+          .wa-input { padding: 12px 16px !important; font-size: 0.95rem !important; }
+          .wa-btn { width: 42px !important; height: 42px !important; font-size: 1rem !important; }
         }
         @media (min-width: 1025px) {
           .finger-indicator { display: none !important; }
