@@ -1036,13 +1036,17 @@ export function AdminDashboard() {
         .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
         .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
 
-        /* BUG FIX 2: FORCE ADMIN-MAIN TO SHOW ON MOBILE IF WRITE ARTICLE IS SELECTED */
+        /* BUG FIX: Mobile Back Button Logic */
+        .mobile-back-btn { display: none !important; }
+
         @media (max-width: 768px) {
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .admin-wrapper { flex-direction: column; }
           .admin-sidebar { width: 100%; flex: 1; display: ${activeRoom || adminView === 'write' ? 'none' : 'flex'} !important; border-right: none; }
           .admin-main { display: ${activeRoom || adminView === 'write' ? 'flex' : 'none'} !important; height: 100%; width: 100%; }
           .chat-window { padding: 20px 5% !important; }
+          .write-article-container { padding: 20px !important; } /* Better padding on mobile */
+          .mobile-back-btn { display: flex !important; } /* Show back button only on mobile */
         }
       `}} />
 
@@ -1088,6 +1092,16 @@ export function AdminDashboard() {
       <main className="admin-main">
         {adminView === 'write' ? (
           <div className="write-article-container" style={{ padding: '40px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+            
+            {/* BUG FIX: Added Back Button for Mobile Article Writer */}
+            <button 
+              className="mobile-back-btn" 
+              onClick={() => setAdminView('chats')}
+              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#94a3b8', padding: '10px 15px', borderRadius: '12px', marginBottom: '20px', cursor: 'pointer', fontWeight: 'bold', alignItems: 'center', gap: '8px', width: 'fit-content' }}
+            >
+              ← Back to Chats
+            </button>
+
             <h2 style={{ color: '#f8fafc', marginBottom: '25px', fontWeight: '900', fontSize: '2.5rem', letterSpacing: '-1px' }}>Draft New Architecture Post</h2>
             <form onSubmit={handlePublishArticle} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <input className="admin-input-title" value={articleTitle} onChange={e => setArticleTitle(e.target.value)} placeholder="New post title here..." style={{ background: 'transparent', border: 'none', borderBottom: '2px solid rgba(255,255,255,0.2)', fontSize: '2rem', color: 'white', padding: '10px 0', marginBottom: '20px', outline: 'none', fontWeight: 'bold' }} />
@@ -1162,7 +1176,7 @@ export function AdminDashboard() {
                       )}
 
                       {hoveredMsgId === m._id && m._id && !m._id.includes('temp') && (
-                          <div className="reaction-menu" style={{ [m.sender === 'admin' ? 'right' : 'left']: '10px' }}>
+                          <div className="reaction-menu" style={{ [m.sender === 'admin' ? 'right' : 'left']: '10px', top: '-40px' }}>
                               {quickReactions.map(emoji => (
                                   <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(m._id, emoji, activeRoom); }}>{emoji}</button>
                               ))}
@@ -1179,7 +1193,7 @@ export function AdminDashboard() {
                       <span className="wa-time">{m.time}</span>
                       
                       {m.reaction && (
-                          <div className="msg-reaction" style={{ [m.sender === 'admin' ? 'right' : 'left']: '5px' }}>
+                          <div className="msg-reaction" style={{ [m.sender === 'admin' ? 'right' : 'left']: '5px', position: 'absolute', bottom: '-12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', padding: '4px 6px', fontSize: '0.85rem' }}>
                               {m.reaction}
                           </div>
                       )}
