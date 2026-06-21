@@ -8,7 +8,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 const socket = io(BACKEND_URL);
 
 // ==========================================
-// STRICT TIMEZONE CONTROLLER (REMOVES SECONDS GLOBALLY)
+// STRICT TIMEZONE CONTROLLER 
 // ==========================================
 const getCleanTime = () => {
   try {
@@ -29,7 +29,7 @@ const cleanTimestamp = (ts) => {
 };
 
 // ==========================================
-// CUSTOM AI & DEV.TO STYLE MARKDOWN PARSER (BUG FIX: BOLD HEADINGS)
+// CUSTOM AI & DEV.TO STYLE MARKDOWN PARSER
 // ==========================================
 const parseInline = (text) => {
   const parts = text.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
@@ -76,9 +76,13 @@ export function ArchitectPortfolio() {
   const chatEndRef = useRef(null);
   const [showBanner] = useState(true); 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // BUG FIX 4: TAP ANIMATION STATE
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasTappedMenu, setHasTappedMenu] = useState(false); 
+  
   const [isChatExpanded, setIsChatExpanded] = useState(false);
-  const [isConnected, setIsConnected] = useState(socket.connected); // BUG FIX: Track real online status
+  const [isConnected, setIsConnected] = useState(socket.connected); 
 
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
@@ -309,9 +313,13 @@ export function ArchitectPortfolio() {
   return (
     <div className="dashboard-layout">
       <style dangerouslySetInnerHTML={{ __html: `
+        /* 1. PREMIUM WIDGET CONTAINER */
         .wa-widget { position: relative; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; height: 550px; background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(5, 10, 21, 0.95)); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); margin-top: 10px; font-family: 'Inter', sans-serif; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; max-width: 100%; box-sizing: border-box; }
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.8rem; font-weight: 900; color: rgba(255, 255, 255, 0.02); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 8px; }
-        .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; height: 100dvh !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; }
+        
+        /* BUG FIX 3: EXPANDED CHAT FILLS PERFECTLY */
+        .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; max-width: 100vw !important; height: 100vh !important; height: 100dvh !important; max-height: none !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(5, 10, 21, 1)) !important; }
+        
         .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; }
         .wa-avatar-container { position: relative; flex-shrink: 0; }
         .wa-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
@@ -330,7 +338,6 @@ export function ArchitectPortfolio() {
         .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
         .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
         
-        /* REACTION SYSTEM CSS */
         .msg-emoji-trigger { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s ease; font-size: 0.8rem; z-index: 20; }
         .bubble-wrapper:hover .msg-emoji-trigger { opacity: 1; }
         .msg-emoji-trigger:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-50%) scale(1.1); }
@@ -347,12 +354,13 @@ export function ArchitectPortfolio() {
         @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes customSpinner { to { transform: rotate(360deg); } }
         
-        /* BUG FIX: FINGER TAP ANIMATION */
+        /* BUG FIX 4: FINGER TAP ANIMATION */
         .finger-indicator { position: absolute; bottom: -30px; right: 5px; font-size: 1.8rem; animation: tapBounce 1s infinite alternate; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; }
         @keyframes tapBounce { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-10px) scale(1.1); opacity: 0.8; } }
 
-        /* BUG FIX: STRICT MOBILE OVERFLOW & ARTICLE DISPLAY */
+        /* BUG FIX 1: STRICT MOBILE OVERFLOW */
         @media (max-width: 1024px) {
+          .wa-widget::before { font-size: 1.5rem !important; letter-spacing: 4px !important; white-space: normal !important; text-align: center; padding: 0 20px; line-height: 1.4; width: 90%; }
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .typewriter-text { white-space: normal !important; border-right: none !important; animation: none !important; max-width: 100% !important; }
           .top-nav-glass { position: fixed !important; top: 85px !important; left: 5% !important; z-index: 9998 !important; display: flex !important; flex-direction: column !important; gap: 12px !important; padding: 15px !important; margin: 0 !important; width: 90% !important; }
@@ -398,14 +406,17 @@ export function ArchitectPortfolio() {
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
             {isDarkMode ? '🌙' : '☀️'}
           </button>
-          {/* BUG FIX: FINGER TAP INDICATOR FOR MOBILE */}
+          
           <button 
             className="ui-btn mobile-menu-btn"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => {
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+                setHasTappedMenu(true); // BUG FIX 4: DISMISSES FINGER PERMANENTLY
+            }}
             style={{ position: 'relative' }}
           >
             {isMobileMenuOpen ? '✕' : '☰'}
-            {!isMobileMenuOpen && <div className="finger-indicator">👆</div>}
+            {!isMobileMenuOpen && !hasTappedMenu && <div className="finger-indicator">👆</div>}
           </button>
         </div>
       )}
@@ -514,7 +525,6 @@ export function ArchitectPortfolio() {
                       <span className="article-date">{new Date(article.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                     
-                    {/* BOLDED ARTICLE PREVIEW TITLES */}
                     <h3 className="article-title" style={{ fontWeight: '900' }}>{article.title}</h3>
                     
                     <p className="article-snippet">
@@ -538,7 +548,6 @@ export function ArchitectPortfolio() {
 
           <section id="contact" style={{ display: 'flex', flexDirection: 'column', marginTop: '40px', paddingBottom: '40px' }}>
             <h2 style={{ color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: '1.4rem', fontWeight: '900', display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
-              {/* BUG FIX: RELY ON isConnected FOR LIVE DOT */}
               <span className="live-dot" style={{ background: isConnected ? '#22c55e' : '#f59e0b', display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', marginRight: '10px', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none', animation: isConnected ? 'pulse 2s infinite' : 'none' }}></span>
               Direct Secure Line
             </h2>
@@ -706,7 +715,7 @@ export function ArticleView() {
     setIsSubmitting(true);
 
     try {
-const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
+      const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: commentName, text: commentText, visitorId })
@@ -1013,7 +1022,6 @@ export function AdminDashboard() {
         .room-item:hover { background: rgba(255,255,255,0.05); }
         .room-item.active { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; }
         
-        /* BUG FIX: PERFECT CLONE OF USER SIDE CHAT BUBBLES FOR ADMIN UI */
         .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; white-space: pre-wrap; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .wa-sent { background: linear-gradient(135deg, #2563eb, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; }
         .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
@@ -1028,11 +1036,12 @@ export function AdminDashboard() {
         .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
         .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
 
+        /* BUG FIX 2: FORCE ADMIN-MAIN TO SHOW ON MOBILE IF WRITE ARTICLE IS SELECTED */
         @media (max-width: 768px) {
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .admin-wrapper { flex-direction: column; }
-          .admin-sidebar { width: 100%; height: ${activeRoom ? 'auto' : '100%'}; flex: ${activeRoom ? 'none' : '1'}; display: ${activeRoom ? 'none' : 'flex'}; border-right: none; }
-          .admin-main { display: ${activeRoom ? 'flex' : 'none'}; height: 100%; width: 100%; }
+          .admin-sidebar { width: 100%; flex: 1; display: ${activeRoom || adminView === 'write' ? 'none' : 'flex'} !important; border-right: none; }
+          .admin-main { display: ${activeRoom || adminView === 'write' ? 'flex' : 'none'} !important; height: 100%; width: 100%; }
           .chat-window { padding: 20px 5% !important; }
         }
       `}} />
@@ -1040,14 +1049,13 @@ export function AdminDashboard() {
       <aside className="admin-sidebar">
         <div className="admin-nav-tabs" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <button className={`admin-tab ${adminView === 'chats' ? 'active-tab' : ''}`} onClick={() => setAdminView('chats')} style={{ flex: 1, padding: '18px', background: adminView === 'chats' ? 'rgba(255,255,255,0.1)' : 'transparent', color: adminView === 'chats' ? '#fff' : '#94a3b8', border: 'none', borderBottom: adminView === 'chats' ? '2px solid #3b82f6' : 'none', cursor: 'pointer', fontWeight: 'bold' }}>Live Chats</button>
-          <button className={`admin-tab ${adminView === 'write' ? 'active-tab' : ''}`} onClick={() => setAdminView('write')} style={{ flex: 1, padding: '18px', background: adminView === 'write' ? 'rgba(255,255,255,0.1)' : 'transparent', color: adminView === 'write' ? '#fff' : '#94a3b8', border: 'none', borderBottom: adminView === 'write' ? '2px solid #3b82f6' : 'none', cursor: 'pointer', fontWeight: 'bold' }}>Write Article</button>
+          <button className={`admin-tab ${adminView === 'write' ? 'active-tab' : ''}`} onClick={() => { setAdminView('write'); setActiveRoom(null); }} style={{ flex: 1, padding: '18px', background: adminView === 'write' ? 'rgba(255,255,255,0.1)' : 'transparent', color: adminView === 'write' ? '#fff' : '#94a3b8', border: 'none', borderBottom: adminView === 'write' ? '2px solid #3b82f6' : 'none', cursor: 'pointer', fontWeight: 'bold' }}>Write Article</button>
         </div>
 
         {adminView === 'chats' && (
           <>
             <div className="sidebar-header" style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '800', color: '#f8fafc' }}>Active Tunnels</h2>
-              {/* BUG FIX: TIE GREEN DOT TO LIVE SOCKET HEALTH */}
               <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isConnected ? '#22c55e' : '#ef4444', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none' }} title={isConnected ? "Online" : "Offline"}></div>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -1141,7 +1149,6 @@ export function AdminDashboard() {
                     onClick={() => setHoveredMsgId(hoveredMsgId === m._id ? null : m._id)}
                   >
                     
-                    {/* EXACTLY CLONED FROM USER SIDE FOR FLAWLESS ADMIN UI */}
                     <div className={`wa-bubble ${m.sender === 'admin' ? 'wa-sent' : 'wa-received'}`}>
 
                       {m._id && !m._id.includes('temp') && (
