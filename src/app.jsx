@@ -505,7 +505,7 @@ export function ArchitectPortfolio() {
             <h2 className="main-heading">✦ Live Architecture Projects</h2>
             <div className="projects-grid">
               <a href="https://subhams-agent-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-blue">
-                <h3>🌐 Subhams Secure Networks</h3>
+                <h3>🌐 Subhams Secure Agent</h3>
                 <p>RAM-based transient state architecture.</p>
                 <div className="project-metrics">⚡ Processes 10k+ ops/sec</div>
               </a>
@@ -565,30 +565,13 @@ export function ArchitectPortfolio() {
                   <img src="/profile.png" alt="Venkata Pavan Kumar" className="wa-avatar" />
                   <span className="status-dot" style={{ background: isConnected ? '#22c55e' : '#f59e0b', boxShadow: isConnected ? '0 0 8px rgba(34, 197, 94, 0.6)' : 'none' }}></span>
                 </div>
-             <div
-  className="wa-header-text"
-  style={{
-    minWidth: 0,
-    flex: 1
-  }}
->
-  <h3
-    style={{
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      margin: 0,
-      fontSize: '1rem'
-    }}
-  >
-    Venkata Pavan Kumar
-  </h3>
-
-  <p>
-    <span style={{ color: isConnected ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span>
-    {isConnected ? 'System Architect Online' : 'Connecting to Server...'}
-  </p>
-</div>
+                <div className="wa-header-text">
+                  <h3>Venkata Pavan Kumar</h3>
+                  <p>
+                    <span style={{ color: isConnected ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span> 
+                    {isConnected ? 'System Architect Online' : 'Connecting to Server...'}
+                  </p>
+                </div>
                 <button 
                   className="chat-expand-btn"
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
