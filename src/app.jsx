@@ -180,6 +180,14 @@ export function ArchitectPortfolio() {
     }
     prevLengthRef.current = chatLog.length;
   }, [chatLog]);
+  // In your frontend React/JS code:
+socket.on('visitor_history_synced', (data) => {
+    if (data.status === 'success') {
+        // Take data.history (array of messages) and put it into your UI state
+        console.log("Got offline history!", data.history);
+        setChatMessages(data.history); // or whatever your state update function is
+    }
+});
 
   useEffect(() => {
     if (socket.connected) {
