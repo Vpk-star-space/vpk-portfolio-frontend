@@ -180,14 +180,6 @@ export function ArchitectPortfolio() {
     }
     prevLengthRef.current = chatLog.length;
   }, [chatLog]);
-  // In your frontend React/JS code:
-socket.on('visitor_history_synced', (data) => {
-    if (data.status === 'success') {
-        // Take data.history (array of messages) and put it into your UI state
-        console.log("Got offline history!", data.history);
-        setChatMessages(data.history); // or whatever your state update function is
-    }
-});
 
   useEffect(() => {
     if (socket.connected) {
@@ -204,6 +196,22 @@ socket.on('visitor_history_synced', (data) => {
     
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    
+    // --- NEW: CATCH OFFLINE HISTORY AND TRANSLATE TO UI FORMAT ---
+    const onHistorySynced = (data) => {
+      if (data.status === 'success' && Array.isArray(data.history)) {
+        console.log("Got offline history!", data.history);
+        const formattedHistory = data.history.map(msg => ({
+          _id: msg._id,
+          type: msg.sender === 'Visitor' ? 'sent' : 'received',
+          sender: msg.sender === 'Visitor' ? 'visitor' : 'admin',
+          text: msg.message,
+          time: cleanTimestamp(msg.timestamp), 
+          reaction: msg.reaction || null
+        }));
+        setChatLog(formattedHistory);
+      }
+    };
     
     const onAdminMsg = (data) => {
       const isObj = typeof data === 'object';
@@ -246,21 +254,24 @@ socket.on('visitor_history_synced', (data) => {
       setChatLog(prev => prev.map(msg => msg._id === data.messageId ? { ...msg, reaction: data.reaction } : msg));
     };
     
+    // Attach Listeners
+    socket.on('visitor_history_synced', onHistorySynced);
     socket.on('admin_msg_received', onAdminMsg);
     socket.on('bot_reply', onBotReply);
     socket.on('msg_saved_confirmation', onMsgSaved);
     socket.on('reaction_updated', onReaction);
     
+    // Cleanup Listeners
     return () => { 
       socket.off('connect', onConnect); 
       socket.off('disconnect', onDisconnect);
+      socket.off('visitor_history_synced', onHistorySynced);
       socket.off('admin_msg_received', onAdminMsg); 
       socket.off('bot_reply', onBotReply);
       socket.off('msg_saved_confirmation', onMsgSaved);
       socket.off('reaction_updated', onReaction);
     };
   }, [visitorId]);
-
   const handleAiSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
