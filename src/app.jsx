@@ -523,17 +523,17 @@ export function ArchitectPortfolio() {
           <section id="projects" className="projects-container">
             <h2 className="main-heading">✦ Live Architecture Projects</h2>
             <div className="projects-grid">
-              <a href="https://subhams-agent-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-blue">
+              <a href="https://agent.subhamsnetworks.in/" target="_blank" rel="noopener noreferrer" className="project-card card-blue">
                 <h3>🌐 Subhams Secure Agent</h3>
                 <p>RAM-based transient state architecture.</p>
                 <div className="project-metrics">⚡ Processes 10k+ ops/sec</div>
               </a>
-              <a href="https://bhavyams-vendor-hub-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-orange">
+              <a href="https://bhavyams.subhamsnetworks.in/" target="_blank" rel="noopener noreferrer" className="project-card card-orange">
                 <h3>🛒 Bhavyams VendorHub</h3>
                 <p>Scalable E-commerce ecosystem engine.</p>
                 <div className="project-metrics">🚀 Handles 5k+ concurrent requests</div>
               </a>
-              <a href="https://subhams-vpk.vercel.app/" target="_blank" rel="noopener noreferrer" className="project-card card-green">
+              <a href="https://pmms.subhamsnetworks.in/" target="_blank" rel="noopener noreferrer" className="project-card card-green">
                 <h3>🔒 PMMS System</h3>
                 <p>Secure financial tracking infrastructure.</p>
                 <div className="project-metrics">🛡️ Zero-disk data retention</div>
