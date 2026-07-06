@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://venkatapavankumar.vercel.app/sitemap.xml
+Sitemap: https:subhamsnetworks.in/sitemap.xml

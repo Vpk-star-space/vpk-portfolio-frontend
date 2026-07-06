@@ -774,7 +774,7 @@ export function ArticleView() {
     ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) 
     : "Read this article on my portfolio.";
 
-  const currentUrl = `https://venkatapavankumar.vercel.app/article/${slug}`;
+  const currentUrl = `https://subhamsnetworks.in/article/${slug}`;
 
   if (!article) return <div style={{ color: '#8696a0', textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', fontWeight: 'bold' }}>Booting infrastructure...</div>;
 
