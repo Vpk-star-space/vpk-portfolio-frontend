@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' blob: https://subhamsnetworks.in wss:https://vpk-portfolio-backend.onrender.com http://localhost:5001 ws://localhost:5001 https://generativelanguage.googleapis.com; img-src 'self' data: https: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+    <!-- FIX: Corrected CSP connection paths for both HTTPS and WSS Render routes -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' blob: https://subhamsnetworks.in https://vpk-portfolio-backend.onrender.com wss://vpk-portfolio-backend.onrender.com http://localhost:5001 ws://localhost:5001 https://generativelanguage.googleapis.com; img-src 'self' data: https: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
 
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,26 +19,51 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- SEO MAGIC: Telling Google explicitly that you are the Founder of Subhams Networks -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Person",
-      "name": "Venkata Pavan Kumar Amarthaluri",
-      "jobTitle": "Systems Architect & Backend Software Engineer",
-      "url": "https://subhamsnetworks.in",
-      "sameAs": [
-        "https://www.linkedin.com/in/venkata-pavan-kumar-server",
-        "https://github.com/Vpk-star-space",
-        "https://bhavyams-vendor-hub-vpk.vercel.app/",
-        "https://subhams-vpk.vercel.app/",
-        "https://subhams-agent-vpk.vercel.app/"
-      ],
-      "knowsAbout": ["Node.js", "MongoDB", "React", "System Architecture", "WebSockets", "Cloud Infrastructure"],
-      "mainEntityOfPage": {
-        "@type": "WebSite",
-        "name": "Venkata Pavan Kumar Engineering Portfolio",
-        "description": "Personal engineering portfolio showcasing live architecture projects, technical publications, and an integrated AI/WebSocket communication layer."
-      }
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "https://subhamsnetworks.in/#person",
+          "name": "Venkata Pavan Kumar Amarthaluri",
+          "jobTitle": "Systems Architect & Backend Software Engineer",
+          "url": "https://subhamsnetworks.in",
+          "sameAs": [
+            "https://www.linkedin.com/in/venkata-pavan-kumar-server",
+            "https://github.com/Vpk-star-space",
+            "https://bhavyams-vendor-hub-vpk.vercel.app/",
+            "https://subhams-vpk.vercel.app/",
+            "https://subhams-agent-vpk.vercel.app/"
+          ],
+          "knowsAbout": ["Node.js", "MongoDB", "React", "System Architecture", "WebSockets", "Cloud Infrastructure"],
+          "worksFor": {
+            "@id": "https://subhamsnetworks.in/#organization"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://subhamsnetworks.in/#organization",
+          "name": "Subhams Networks",
+          "url": "https://subhamsnetworks.in",
+          "logo": "https://subhamsnetworks.in/vite.svg",
+          "founder": {
+            "@id": "https://subhamsnetworks.in/#person"
+          },
+          "description": "An enterprise ecosystem of full-stack applications, localized API systems, and backend networking infrastructure managed by Venkata Pavan Kumar Amarthaluri."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://subhamsnetworks.in/#website",
+          "url": "https://subhamsnetworks.in",
+          "name": "Venkata Pavan Kumar Engineering Portfolio",
+          "description": "Personal engineering portfolio showcasing live architecture projects, technical publications, and an integrated AI/WebSocket communication layer.",
+          "publisher": {
+            "@id": "https://subhamsnetworks.in/#organization"
+          }
+        }
+      ]
     }
     </script>
     
