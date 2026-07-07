@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https:subhamsnetworks.in/sitemap.xml
+Sitemap: https://subhamsnetworks.in/sitemap.xml
