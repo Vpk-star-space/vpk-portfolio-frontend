@@ -509,11 +509,11 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 @media (max-width: 1024px) {
   .mobile-menu-btn { display: flex !important; }
   
-  .top-nav-glass { 
+.top-nav-glass { 
     position: fixed !important;
     top: 85px !important;
     left: 5% !important;
-    z-index: 9998 !important;
+    z-index: 9000 !important; /* FIX: Lowered from 9998 so the overlay can cover it */
     display: flex !important; 
     flex-direction: column !important;
     gap: 12px !important;
@@ -533,8 +533,12 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
 
   .mobile-nav-menu { display: flex !important; } 
 
-  .dashboard-layout { display: flex; flex-direction: column; width: 100%; overflow-x: clip !important; }
-
+.dashboard-layout { 
+    display: flex; 
+    flex-direction: column; 
+    width: 100%; 
+    overflow-x: visible !important; /* FIX: Changed from 'clip'. Your body tag already handles clipping, and 'visible' allows the blur engine to work! */
+  }
 .sidebar {
     position: fixed !important;
     left: -340px !important;
@@ -558,17 +562,17 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     -webkit-backdrop-filter: blur(12px) !important; /* For Safari on iPhones */
     border-right: 1px solid rgba(255, 255, 255, 0.6) !important; /* Shimmery glass edge */
   }
-  /* NEW: The dark overlay that blocks the background */
+/* NEW: The dark overlay that blocks the background */
   .sidebar-overlay {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background-color: rgba(0, 0, 0, 0.6) !important; /* Darkens the main content */
-    backdrop-filter: blur(4px) !important; /* Adds a nice blur to the background */
-    -webkit-backdrop-filter: blur(4px) !important; 
-    z-index: 9998 !important; /* Must be 9998 so it sits exactly behind the sidebar (9999) */
+    background-color: rgba(0, 0, 0, 0.6) !important; 
+    backdrop-filter: blur(12px) !important; /* FIX: Increased to 12px so the liquid glass effect is obvious */
+    -webkit-backdrop-filter: blur(12px) !important; 
+    z-index: 9998 !important; 
     cursor: pointer;
   }
 
