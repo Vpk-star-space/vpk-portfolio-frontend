@@ -460,10 +460,11 @@ export function ArchitectPortfolio() {
 
         <div className="section-title">Connect & Links</div>
         <div className="social-links">
-          <a href="https://www.linkedin.com/in/venkata-pavan-kumar-server" target="_blank" rel="noopener noreferrer" className="social-link link-linkedin"><span>💼</span> LinkedIn</a>
-          <a href="https://github.com/Vpk-star-space" target="_blank" rel="noopener noreferrer" className="social-link link-github"><span>🐙</span> GitHub</a>
-          <a href="https://dev.to/vpkstarspace" target="_blank" rel="noopener noreferrer" className="social-link link-devto"><span>👨‍💻</span> Dev.to</a>
-          <a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
+      <a href="https://www.linkedin.com/in/venkata-pavan-kumar-server" target="_blank" rel="noopener noreferrer" className="social-link link-linkedin"><span>💼</span> LinkedIn</a>
+<a href="https://github.com/Vpk-star-space" target="_blank" rel="noopener noreferrer" className="social-link link-github"><span>🐙</span> GitHub</a>
+<a href="https://dev.to/vpkstarspace" target="_blank" rel="noopener noreferrer" className="social-link link-devto"><span>👨‍💻</span> Dev.to</a>
+<a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
+<a href="https://youtube.com/shorts/9GhIOfa2z4U" target="_blank" rel="noopener noreferrer" className="social-link link-youtube"><span>▶️</span> YouTube</a>
         </div>
       </aside>
 
