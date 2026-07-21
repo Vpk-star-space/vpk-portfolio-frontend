@@ -1065,7 +1065,7 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="admin-wrapper" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#050a15', fontFamily: "'Inter', sans-serif" }}>
+<div className="admin-wrapper" style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: '#050a15', fontFamily: "'Inter', sans-serif" }}>
       
       <style dangerouslySetInnerHTML={{ __html: `
         .admin-sidebar { width: 350px; flex-shrink: 0; background: rgba(15, 23, 42, 0.95); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; z-index: 10; backdrop-filter: blur(20px); }
@@ -1162,8 +1162,8 @@ export function AdminDashboard() {
           </div>
         ) : (
               activeRoom ? (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
+             <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div className="avatar" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
                   <div>
