@@ -892,6 +892,7 @@ export function AdminDashboard() {
   const [replyInputs, setReplyInputs] = useState({});
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   const [articleTitle, setArticleTitle] = useState('');
   const [articleContent, setArticleContent] = useState('');
@@ -900,24 +901,15 @@ export function AdminDashboard() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); 
   const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
   
-/* BUG FIX: Bulletproof MutationObserver. Watches the DOM and forces scroll instantly when a bubble is added. */
+/* BULLETPROOF SCROLL FIX: Targets the container's scrollbar directly */
   useEffect(() => {
-    const chatWin = document.getElementById('admin-chat-window');
-    if (!chatWin || adminView !== 'chats') return;
-
-    const scrollToBottom = () => {
-      chatWin.scrollTop = chatWin.scrollHeight;
-    };
-
-    // Scroll immediately on load/room switch
-    scrollToBottom();
-
-    // Observe the chat window for any new messages
-    const observer = new MutationObserver(scrollToBottom);
-    observer.observe(chatWin, { childList: true, subtree: true });
-
-    return () => observer.disconnect();
-  }, [activeRoom, adminView]);
+    if (chatContainerRef.current && adminView === 'chats') {
+      // 50ms timeout guarantees React has physically drawn the new message on screen
+      setTimeout(() => {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }, 50);
+    }
+  }, [conversations, activeRoom, adminView]);
 
   useEffect(() => {
     localStorage.setItem('admin_chats', JSON.stringify(conversations));
@@ -1210,10 +1202,7 @@ export function AdminDashboard() {
                   ✕ Close Chat
                 </button>
               </div>
-              
-{/* BUG FIX: Added minHeight 0 to the chat window, and added height to the end ref */}
-             {/* BUG FIX: Added id="admin-chat-window" so the Observer can hook into it directly */}
-              <div id="admin-chat-window" className="chat-window" style={{ flex: 1, padding: '30px 10%', display: 'flex', flexDirection: 'column', overflowY: 'auto', minHeight: 0 }}>
+<div ref={chatContainerRef} className="chat-window" style={{ flex: 1, padding: '30px 10%', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ textAlign: 'center', margin: '15px 0' }}>
                   <span style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>
                     🔒 Secure Admin Channel
