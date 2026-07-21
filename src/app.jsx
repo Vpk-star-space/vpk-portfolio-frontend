@@ -1069,7 +1069,7 @@ export function AdminDashboard() {
       
       <style dangerouslySetInnerHTML={{ __html: `
         .admin-sidebar { width: 350px; flex-shrink: 0; background: rgba(15, 23, 42, 0.95); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; z-index: 10; backdrop-filter: blur(20px); }
-        .admin-main { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(5, 10, 21, 1) 100%); }
+       .admin-main { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(5, 10, 21, 1) 100%); min-height: 0; }
         .room-item:hover { background: rgba(255,255,255,0.05); }
         .room-item.active { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; }
         
@@ -1094,7 +1094,7 @@ export function AdminDashboard() {
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .admin-wrapper { flex-direction: column; }
           .admin-sidebar { width: 100%; flex: 1; display: ${activeRoom || adminView === 'write' ? 'none' : 'flex'} !important; border-right: none; }
-          .admin-main { display: ${activeRoom || adminView === 'write' ? 'flex' : 'none'} !important; height: 100%; width: 100%; }
+         .admin-main { display: ${activeRoom || adminView === 'write' ? 'flex' : 'none'} !important; flex: 1; width: 100%; min-height: 0 !important; }
           .chat-window { padding: 20px 5% !important; }
           .write-article-container { padding: 20px !important; } /* Better padding on mobile */
           .mobile-back-btn { display: flex !important; } /* Show back button only on mobile */
@@ -1197,7 +1197,7 @@ export function AdminDashboard() {
                 </button>
               </div>
               
-              <div className="chat-window" style={{ flex: 1, padding: '30px 10%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+<div className="chat-window" style={{ flex: 1, padding: '30px 10%', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ textAlign: 'center', margin: '15px 0' }}>
                   <span style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>
                     🔒 Secure Admin Channel
