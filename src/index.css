@@ -558,6 +558,19 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     -webkit-backdrop-filter: blur(12px) !important; /* For Safari on iPhones */
     border-right: 1px solid rgba(255, 255, 255, 0.6) !important; /* Shimmery glass edge */
   }
+  /* NEW: The dark overlay that blocks the background */
+  .sidebar-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.6) !important; /* Darkens the main content */
+    backdrop-filter: blur(4px) !important; /* Adds a nice blur to the background */
+    -webkit-backdrop-filter: blur(4px) !important; 
+    z-index: 9998 !important; /* Must be 9998 so it sits exactly behind the sidebar (9999) */
+    cursor: pointer;
+  }
 
   .sidebar.mobile-open { left: 0 !important; box-shadow: 25px 0 60px rgba(0, 0, 0, 0.6) !important; }
 

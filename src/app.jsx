@@ -426,8 +426,7 @@ export function ArchitectPortfolio() {
           </div>
         </div>
       )}
-      
-      {!isChatExpanded && (
+    {!isChatExpanded && (
         <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
             {isDarkMode ? '🌙' : '☀️'}
@@ -447,6 +446,14 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
+      {/* NEW: Dark overlay that blocks the background when the menu is open */}
+      {isMobileMenuOpen && (
+        <div 
+          className="sidebar-overlay" 
+          onClick={() => setIsMobileMenuOpen(false)} 
+        ></div>
+      )}
+
       <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <img src="/profile.png" alt="Venkata Pavan Kumar Profile" className="profile-img" />
         <h1>Venkata Pavan Kumar</h1>
@@ -460,11 +467,11 @@ export function ArchitectPortfolio() {
 
         <div className="section-title">Connect & Links</div>
         <div className="social-links">
-      <a href="https://www.linkedin.com/in/venkata-pavan-kumar-server" target="_blank" rel="noopener noreferrer" className="social-link link-linkedin"><span>💼</span> LinkedIn</a>
-<a href="https://github.com/Vpk-star-space" target="_blank" rel="noopener noreferrer" className="social-link link-github"><span>🐙</span> GitHub</a>
-<a href="https://dev.to/vpkstarspace" target="_blank" rel="noopener noreferrer" className="social-link link-devto"><span>👨‍💻</span> Dev.to</a>
-<a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
-<a href="https://youtube.com/shorts/9GhIOfa2z4U" target="_blank" rel="noopener noreferrer" className="social-link link-youtube"><span>▶️</span> YouTube</a>
+          <a href="https://www.linkedin.com/in/venkata-pavan-kumar-server" target="_blank" rel="noopener noreferrer" className="social-link link-linkedin"><span>💼</span> LinkedIn</a>
+          <a href="https://github.com/Vpk-star-space" target="_blank" rel="noopener noreferrer" className="social-link link-github"><span>🐙</span> GitHub</a>
+          <a href="https://dev.to/vpkstarspace" target="_blank" rel="noopener noreferrer" className="social-link link-devto"><span>👨‍💻</span> Dev.to</a>
+          <a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
+          <a href="https://youtube.com/shorts/9GhIOfa2z4U" target="_blank" rel="noopener noreferrer" className="social-link link-youtube"><span>▶️</span> YouTube</a>
         </div>
       </aside>
 
