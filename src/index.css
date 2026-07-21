@@ -733,3 +733,14 @@ body.dark-theme .admin-wrapper {
   font-size: 14px; 
   letter-spacing: 2px; 
 }
+/* ==========================================
+   MOBILE DARK MODE SIDEBAR FIX
+   ========================================== */
+@media (max-width: 1024px) {
+  body.dark-theme .sidebar {
+    background: rgba(5, 12, 33, 0.98) !important; /* Solid dark blue to block text */
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+}
