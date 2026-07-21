@@ -556,7 +556,17 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     padding-bottom: 120px !important;
     box-sizing: border-box !important; 
     
-  
+    /* FIX: Increased opacity to 0.95 to totally block background text from bleeding through */
+    background: rgba(255, 255, 255, 0.95) !important; 
+    backdrop-filter: blur(20px) !important; 
+    -webkit-backdrop-filter: blur(20px) !important; 
+    border-right: 1px solid rgba(0, 0, 0, 0.05) !important; 
+  }
+
+  /* FIX: Ensure dark theme also blocks background text on mobile */
+  body.dark-theme .sidebar {
+    background: rgba(15, 23, 42, 0.98) !important; 
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 /* NEW: The dark overlay that blocks the background */
   .sidebar-overlay {
