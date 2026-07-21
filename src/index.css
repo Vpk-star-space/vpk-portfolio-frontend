@@ -565,11 +565,11 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     padding-bottom: 120px !important;
     box-sizing: border-box !important; 
     
-    /* FIX: The EXACT desktop gradient, just thickened to 0.95 to block the black overlay */
-  background: var(--glass-bg-light) !important;
-    backdrop-filter: var(--glass-blur-base) !important; 
-    -webkit-backdrop-filter: var(--glass-blur-base) !important; 
-    border-right: var(--glass-border-light) !important; 
+    /* FIX: Increased opacity to 0.95 to totally block background text from bleeding through */
+    background: rgba(255, 255, 255, 0.95) !important; 
+    backdrop-filter: blur(20px) !important; 
+    -webkit-backdrop-filter: blur(20px) !important; 
+    border-right: 1px solid rgba(0, 0, 0, 0.05) !important; 
   }
 
   /* FIX: Ensure dark theme also blocks background text on mobile */
