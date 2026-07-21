@@ -556,11 +556,7 @@ body.dark-theme .ui-btn, body.dark-theme .mobile-menu-btn {
     padding-bottom: 120px !important;
     box-sizing: border-box !important; 
     
-    /* NEW: Liquid Glass Effect for Mobile Sidebar Only */
-    background: rgba(255, 255, 255, 0.45) !important; /* Semi-transparent white */
-    backdrop-filter: blur(12px) !important; /* The background blur */
-    -webkit-backdrop-filter: blur(12px) !important; /* For Safari on iPhones */
-    border-right: 1px solid rgba(255, 255, 255, 0.6) !important; /* Shimmery glass edge */
+  
   }
 /* NEW: The dark overlay that blocks the background */
   .sidebar-overlay {
