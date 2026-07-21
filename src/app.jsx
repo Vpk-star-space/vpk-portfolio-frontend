@@ -899,12 +899,25 @@ export function AdminDashboard() {
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); 
   const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
-
+  
+/* BUG FIX: Bulletproof MutationObserver. Watches the DOM and forces scroll instantly when a bubble is added. */
   useEffect(() => {
-    if (messagesEndRef.current && adminView === 'chats') {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [conversations, activeRoom, adminView]);
+    const chatWin = document.getElementById('admin-chat-window');
+    if (!chatWin || adminView !== 'chats') return;
+
+    const scrollToBottom = () => {
+      chatWin.scrollTop = chatWin.scrollHeight;
+    };
+
+    // Scroll immediately on load/room switch
+    scrollToBottom();
+
+    // Observe the chat window for any new messages
+    const observer = new MutationObserver(scrollToBottom);
+    observer.observe(chatWin, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, [activeRoom, adminView]);
 
   useEffect(() => {
     localStorage.setItem('admin_chats', JSON.stringify(conversations));
@@ -1162,7 +1175,8 @@ export function AdminDashboard() {
           </div>
         ) : (
               activeRoom ? (
-  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
+
+<div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
              <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div className="avatar" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
@@ -1197,7 +1211,9 @@ export function AdminDashboard() {
                 </button>
               </div>
               
-<div className="chat-window" style={{ flex: 1, padding: '30px 10%', overflowY: 'auto', minHeight: 0 }}>
+{/* BUG FIX: Added minHeight 0 to the chat window, and added height to the end ref */}
+             {/* BUG FIX: Added id="admin-chat-window" so the Observer can hook into it directly */}
+              <div id="admin-chat-window" className="chat-window" style={{ flex: 1, padding: '30px 10%', display: 'flex', flexDirection: 'column', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ textAlign: 'center', margin: '15px 0' }}>
                   <span style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>
                     🔒 Secure Admin Channel
@@ -1252,7 +1268,8 @@ export function AdminDashboard() {
                     </div>
                   </div>
                 ))}
-                <div ref={messagesEndRef} />
+                {/* BUG FIX: Added a 1px height so the browser scroll engine actually has something physical to grab onto */}
+                <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
               </div>
 
               <div className="admin-input-area" style={{ padding: '20px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '15px', position: 'relative' }}>
