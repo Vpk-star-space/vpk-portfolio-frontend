@@ -536,8 +536,8 @@ export function ArchitectPortfolio() {
                 <p>RAM-based transient state architecture.</p>
                 <div className="project-metrics">⚡ Processes 10k+ ops/sec</div>
               </a>
-              <a href="https://bhavyams.subhamsnetworks.in/" target="_blank" rel="noopener noreferrer" className="project-card card-orange">
-                <h3>🛒 Bhavyams VendorHub</h3>
+              <a href="https://hub.subhamsnetworks.in/" target="_blank" rel="noopener noreferrer" className="project-card card-orange">
+                <h3>🛒 Subhams Hub</h3>
                 <p>Scalable E-commerce ecosystem engine.</p>
                 <div className="project-metrics">🚀 Handles 5k+ concurrent requests</div>
               </a>
