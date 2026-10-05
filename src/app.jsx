@@ -6,6 +6,50 @@ import { Helmet } from 'react-helmet-async';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 const socket = io(BACKEND_URL);
+const VISITOR_SESSION_KEY = 'vpk_visitor_session';
+let visitorSessionRequest;
+
+const getVisitorSession = async (forceRefresh = false) => {
+  if (forceRefresh) localStorage.removeItem(VISITOR_SESSION_KEY);
+  const stored = forceRefresh ? null : localStorage.getItem(VISITOR_SESSION_KEY);
+  if (stored) {
+    try {
+      const session = JSON.parse(stored);
+      if (session.visitorId && session.token) return session;
+    } catch {
+      localStorage.removeItem(VISITOR_SESSION_KEY);
+    }
+  }
+
+  if (!visitorSessionRequest) {
+    visitorSessionRequest = fetch(`${BACKEND_URL}/api/visitor/session`, { method: 'POST' })
+      .then(async response => {
+        if (!response.ok) throw new Error('Unable to create visitor session');
+        const session = await response.json();
+        if (!session.visitorId || !session.token) throw new Error('Invalid visitor session response');
+        localStorage.setItem(VISITOR_SESSION_KEY, JSON.stringify(session));
+        return session;
+      })
+      .finally(() => {
+        visitorSessionRequest = null;
+      });
+  }
+  return visitorSessionRequest;
+};
+
+const fetchWithVisitorAuth = async (url, options) => {
+  let session = await getVisitorSession();
+  const send = token => fetch(url, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${token}` }
+  });
+  let response = await send(session.token);
+  if (response.status === 401) {
+    session = await getVisitorSession(true);
+    response = await send(session.token);
+  }
+  return response;
+};
 
 // ==========================================
 // STRICT TIMEZONE CONTROLLER 
@@ -94,14 +138,7 @@ export function ArchitectPortfolio() {
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
 
-  const [visitorId] = useState(() => {
-    let vid = localStorage.getItem('vpk_visitor_id');
-    if (!vid) {
-      vid = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('vpk_visitor_id', vid);
-    }
-    return vid;
-  });
+  const [visitorToken, setVisitorToken] = useState(null);
 
   const [chatLog, setChatLog] = useState(() => {
     const saved = localStorage.getItem('vpk_chat_history');
@@ -109,6 +146,20 @@ export function ArchitectPortfolio() {
     prevLengthRef.current = parsed.length;
     return parsed;
   });
+
+  useEffect(() => {
+    let isMounted = true;
+    getVisitorSession()
+      .then(session => {
+        if (isMounted) {
+          setVisitorToken(session.token);
+        }
+      })
+      .catch(error => console.error('Unable to initialize visitor session:', error));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -182,20 +233,31 @@ export function ArchitectPortfolio() {
   }, [chatLog]);
 
   useEffect(() => {
-    if (socket.connected) {
-      setIsConnected(true);
-      socket.emit('join_visitor', { visitorId });
-    }
+    if (!visitorToken) return undefined;
+    socket.auth = { token: visitorToken };
+    socket.disconnect();
     
     const onConnect = () => {
         setIsConnected(true);
-        socket.emit('join_visitor', { visitorId });
+        socket.emit('join_visitor');
     };
 
-    const onDisconnect = () => setIsConnected(false);
+    const onDisconnect = reason => {
+      setIsConnected(false);
+      if (reason === 'io server disconnect') socket.connect();
+    };
+    const onConnectError = error => {
+      setIsConnected(false);
+      if (error.message === 'Invalid or expired credentials') {
+        getVisitorSession(true)
+          .then(session => setVisitorToken(session.token))
+          .catch(refreshError => console.error('Unable to renew visitor session:', refreshError));
+      }
+    };
     
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
     
     // --- NEW: CATCH OFFLINE HISTORY AND TRANSLATE TO UI FORMAT ---
     const onHistorySynced = (data) => {
@@ -260,18 +322,22 @@ export function ArchitectPortfolio() {
     socket.on('bot_reply', onBotReply);
     socket.on('msg_saved_confirmation', onMsgSaved);
     socket.on('reaction_updated', onReaction);
+    socket.connect();
     
     // Cleanup Listeners
     return () => { 
       socket.off('connect', onConnect); 
       socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
       socket.off('visitor_history_synced', onHistorySynced);
       socket.off('admin_msg_received', onAdminMsg); 
       socket.off('bot_reply', onBotReply);
       socket.off('msg_saved_confirmation', onMsgSaved);
       socket.off('reaction_updated', onReaction);
+      socket.disconnect();
+      socket.auth = {};
     };
-  }, [visitorId]);
+  }, [visitorToken]);
   const handleAiSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -308,7 +374,7 @@ export function ArchitectPortfolio() {
   };
   
   const handleSendMessage = () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !visitorToken) return;
 
     if (!isBackendReady) {
       setShowBootOverlay(true);
@@ -316,7 +382,7 @@ export function ArchitectPortfolio() {
     }
 
     const tempId = `temp_${Date.now()}`;
-    socket.emit('stream_secure_msg', { visitorId, message }); 
+    socket.emit('stream_secure_msg', { message }); 
     setChatLog((prev) => [...prev, { _id: tempId, type: 'sent', text: message, time: getCleanTime(), reaction: null }]);
     setMessage('');
     setShowEmojiPicker(false);
@@ -324,7 +390,7 @@ export function ArchitectPortfolio() {
 
   const handleReact = (messageId, reaction) => {
     if(!messageId || messageId.startsWith('temp')) return; 
-    socket.emit('react_to_msg', { messageId, reaction, roomId: visitorId });
+    socket.emit('react_to_msg', { messageId, reaction });
     setChatLog(prev => prev.map(msg => msg._id === messageId ? { ...msg, reaction: reaction } : msg));
     setHoveredMsgId(null);
   };
@@ -740,8 +806,6 @@ export function ArticleView() {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const visitorId = localStorage.getItem('vpk_visitor_id') || 'unknown_visitor';
-
   useEffect(() => {
   fetch(`${BACKEND_URL}/api/articles/${slug}`)
       .then(res => res.json())
@@ -753,11 +817,15 @@ export function ArticleView() {
     if (isLiking) return;
     setIsLiking(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/like`, { method: 'POST' });
+      const res = await fetchWithVisitorAuth(`${BACKEND_URL}/api/articles/${slug}/like`, { method: 'POST' });
+      if (!res.ok) throw new Error(`Like failed with status ${res.status}`);
       const data = await res.json();
       setArticle(prev => ({ ...prev, likes: data.likes }));
-    } catch (err) {}
-    setTimeout(() => setIsLiking(false), 1000); 
+    } catch (err) {
+      console.error('Unable to like article:', err);
+    } finally {
+      setTimeout(() => setIsLiking(false), 1000);
+    }
   };
 
   const handleCommentSubmit = async (e) => {
@@ -766,16 +834,20 @@ export function ArticleView() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/articles/${slug}/comment`, {
+      const res = await fetchWithVisitorAuth(`${BACKEND_URL}/api/articles/${slug}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: commentName, text: commentText, visitorId })
+        body: JSON.stringify({ name: commentName, text: commentText })
       });
+      if (!res.ok) throw new Error(`Comment failed with status ${res.status}`);
       const updatedComments = await res.json();
       setArticle(prev => ({ ...prev, comments: updatedComments }));
       setCommentText(''); 
-    } catch (err) {}
-    setIsSubmitting(false);
+    } catch (err) {
+      console.error('Unable to submit comment:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const cleanDescription = article?.content 
@@ -883,6 +955,10 @@ export function ArticleView() {
 // ==========================================
 export function AdminDashboard() {
   const [adminView, setAdminView] = useState('chats'); 
+  const [adminToken, setAdminToken] = useState(() => sessionStorage.getItem('vpk_admin_token') || '');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   const [conversations, setConversations] = useState(() => {
     const savedChats = localStorage.getItem('admin_chats');
@@ -916,11 +992,31 @@ export function AdminDashboard() {
   }, [conversations]);
   
   useEffect(() => {
+    if (!adminToken) {
+      socket.disconnect();
+      socket.auth = {};
+      return undefined;
+    }
+    socket.auth = { token: adminToken };
+    socket.disconnect();
+
     const onConnect = () => {
       setIsConnected(true);
       socket.emit('join_admin');
     };
-    const onDisconnect = () => setIsConnected(false);
+    const onDisconnect = reason => {
+      setIsConnected(false);
+      if (reason === 'io server disconnect') socket.connect();
+    };
+    const onConnectError = error => {
+      if (error.message === 'Invalid or expired credentials') {
+        sessionStorage.removeItem('vpk_admin_token');
+        setAdminToken('');
+        setLoginError('Your admin session expired. Please sign in again.');
+      } else {
+        setLoginError('Unable to connect to the admin service.');
+      }
+    };
 
     const onAdminConfirmation = (payload) => {
       if (payload && payload.offlineHistory) {
@@ -981,30 +1077,68 @@ export function AdminDashboard() {
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
     socket.on('admin_joined_confirmation', onAdminConfirmation);
     socket.on('new_visitor_msg', onNewVisitorMsg);
     socket.on('reaction_updated', onReaction);
     socket.on('admin_msg_saved', onAdminSaved);
 
-    if (socket.connected) {
-      setIsConnected(true);
-      socket.emit('join_admin');
-    }
+    socket.connect();
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
       socket.off('admin_joined_confirmation', onAdminConfirmation);
       socket.off('new_visitor_msg', onNewVisitorMsg);
       socket.off('reaction_updated', onReaction);
       socket.off('admin_msg_saved', onAdminSaved);
+      socket.disconnect();
+      socket.auth = {};
     };
-  }, []);
+  }, [adminToken]);
+
+  const handleAdminLogin = async event => {
+    event.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError('');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: adminPassword })
+      });
+      if (!response.ok) {
+        setLoginError(response.status === 429
+          ? 'Too many attempts. Try again later.'
+          : 'Invalid password.');
+        return;
+      }
+      const { token } = await response.json();
+      if (!token) throw new Error('Missing admin session token');
+      sessionStorage.setItem('vpk_admin_token', token);
+      setAdminToken(token);
+      setAdminPassword('');
+    } catch (error) {
+      console.error('Admin login failed:', error);
+      setLoginError('Unable to sign in. Check the connection and try again.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('vpk_admin_token');
+    setAdminToken('');
+    setConversations({});
+    setActiveRoom(null);
+  };
 
   const sendReply = (roomId) => {
     const text = replyInputs[roomId];
     if (!text || !text.trim()) return;
     
+    if (!adminToken) return;
     socket.emit('admin_reply', { targetRoom: roomId, message: text });
     
     setConversations(prev => ({
@@ -1055,7 +1189,10 @@ export function AdminDashboard() {
     try {
     const response = await fetch(`${BACKEND_URL}/api/articles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`
+        },
         body: JSON.stringify({ title: articleTitle, content: articleContent })
       });
       if (response.ok) {
@@ -1068,6 +1205,30 @@ export function AdminDashboard() {
       alert('Failed to publish. Check connection.');
     }
   };
+
+  if (!adminToken) {
+    return (
+      <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', background: '#050a15', color: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
+        <form onSubmit={handleAdminLogin} style={{ width: 'min(420px, calc(100% - 40px))', padding: '32px', borderRadius: '18px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <h1 style={{ marginTop: 0 }}>Admin sign in</h1>
+          <label htmlFor="admin-password" style={{ display: 'block', marginBottom: '8px' }}>Admin password</label>
+          <input
+            id="admin-password"
+            type="password"
+            autoComplete="current-password"
+            value={adminPassword}
+            onChange={event => setAdminPassword(event.target.value)}
+            required
+            style={{ boxSizing: 'border-box', width: '100%', padding: '12px', marginBottom: '16px', color: '#fff', background: '#050a15', border: '1px solid #334155', borderRadius: '8px' }}
+          />
+          {loginError && <p role="alert" style={{ color: '#fca5a5' }}>{loginError}</p>}
+          <button type="submit" disabled={isLoggingIn} style={{ width: '100%', padding: '12px', color: '#fff', background: '#2563eb', border: 0, borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>
+            {isLoggingIn ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+      </main>
+    );
+  }
 
   return (
 <div className="admin-wrapper" style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: '#050a15', fontFamily: "'Inter', sans-serif" }}>
@@ -1116,7 +1277,10 @@ export function AdminDashboard() {
           <>
             <div className="sidebar-header" style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '800', color: '#f8fafc' }}>Active Tunnels</h2>
-              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isConnected ? '#22c55e' : '#ef4444', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none' }} title={isConnected ? "Online" : "Offline"}></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isConnected ? '#22c55e' : '#ef4444', boxShadow: isConnected ? '0 0 10px rgba(34, 197, 94, 0.5)' : 'none' }} title={isConnected ? "Online" : "Offline"}></div>
+                <button onClick={handleAdminLogout} style={{ background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', borderRadius: '6px', padding: '6px 9px', cursor: 'pointer' }}>Sign out</button>
+              </div>
             </div>
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {Object.keys(conversations).length === 0 ? (
