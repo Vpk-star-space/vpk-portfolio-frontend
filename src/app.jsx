@@ -700,7 +700,7 @@ export function ArchitectPortfolio() {
                   </h3>
                   <p>
                     <span style={{ color: isConnected ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span>
-                    {isConnected ? 'System Architect Online' : 'Connecting to Server...'}
+                    {isConnected ? 'System is Online' : 'Connecting to Server...'}
                   </p>
                 </div>
                 <button 
