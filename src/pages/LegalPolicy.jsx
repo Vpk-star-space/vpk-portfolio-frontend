@@ -25,11 +25,11 @@ const content = {
                 ['No accounts', 'The main site needs no sign-up, Google login or account.'],
                 ['No ad trackers', 'We run no analytics or advertising trackers. Our hosting providers may log technical data such as your IP address.'],
                 ['Contact chat', 'Your messages go to the Administrator and are used only to reply to you.']] },
-            agent: { login: 'Customers: none. Shops: Email or Google', data: 'A Job ID. Shops: account and ID documents', points: [
-                ['Customers', 'No sign-up or phone permission. The temporary name you enter stays only on your device.'],
-                ['Uploads', 'Files are encrypted in transit and sent to the shop. Our servers do not store them; our database records only a Job ID.'],
+            agent: { login: 'Customers: none. Shops: Email or Google', data: 'A Job ID. Shops: account and ID ', points: [
+                ['Customers', 'No sign-up or phone permission. The temporary name in you enter stays only on your device Untill if send it Shop in copies They Saw only recognize Purpose,Your name it only temporary in Your sending Shop.'],
+                ['Uploads', 'Files are encrypted in transit and sent to the shop. Our servers do not store them; our database records only a Job ID in temporary only.'],
                 ['10-minute auto-delete', 'Files are deleted from the shop queue within 10 minutes, printed or not.'],
-                ['Shops', 'Owners register with Email or Google and upload ID documents to verify the shop. Breaking the printing rules leads to permanent removal.']] },
+                ['Shops', 'Owners register with Email or Google and  to verify the shop. Breaking the printing rules leads to permanent removal.']] },
             pmms: { login: 'Email or Google', data: 'Only numbers you enter yourself', points: [
                 ['Your data', 'We do not sell or share your financial data, except with the providers below that store it for us.'],
                 ['Manual entry only', 'PMMS is a closed system that processes only the figures you type in.'],
