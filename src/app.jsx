@@ -3,6 +3,8 @@ import { io } from 'socket.io-client';
 import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import './index.css';
 import { Helmet } from 'react-helmet-async';
+import { ShieldCheck, Globe, Printer, PieChart, Store, AlertTriangle, Lock, Server, Info, ArrowLeft } from 'lucide-react';
+import LegalPolicy from './pages/LegalPolicy'; 
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 const socket = io(BACKEND_URL);
@@ -51,9 +53,6 @@ const fetchWithVisitorAuth = async (url, options) => {
   return response;
 };
 
-// ==========================================
-// STRICT TIMEZONE CONTROLLER 
-// ==========================================
 const getCleanTime = () => {
   try {
     return new Intl.DateTimeFormat('en-US', { 
@@ -72,9 +71,6 @@ const cleanTimestamp = (ts) => {
   return ts.replace(/:(\d{2}):\d{2}/, ':$1'); 
 };
 
-// ==========================================
-// CUSTOM AI & DEV.TO STYLE MARKDOWN PARSER
-// ==========================================
 const parseInline = (text) => {
   const parts = text.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
   return parts.map((part, i) => {
@@ -103,6 +99,65 @@ const renderMarkdown = (text) => {
   });
 };
 
+// 🛡️ ADVANCED SUBHAMS SHIELD SCANNER
+const scanClientMessage = (text) => {
+  if (!text || !text.trim()) return { safe: false, error: "Message cannot be empty." };
+  const trimmed = text.trim();
+
+  // 1. Repetition Filter: Dynamically catches 4+ repeated letters (e.g. "nnnnnn", "aaaaa")
+  const repeatMatch = trimmed.match(/(.)\1{3,}/i);
+  if (repeatMatch) {
+    return { 
+      safe: false, 
+      error: `🚨 Subhams networks Shield Guard: Spam detected! Repeating pattern '${repeatMatch[0]}' is blocked.` 
+    };
+  }
+
+  // 2. Code Injection Scanner (XSS, SQLi, HTML tags)
+  if (/<[^>]*>|javascript:|drop\s+table|select\s+.*\s+from/i.test(trimmed)) {
+    return { 
+      safe: false, 
+      error: "🚨 Subhams networks Shield Guard: Security violation! Script or code injection blocked." 
+    };
+  }
+
+  // 3. Normalization (catches spaced/dotted evasion like "u g l y", "f.u.c.k", "w_o_r_s_t")
+  const normalized = trimmed.toLowerCase().replace(/[\s\._\-\*]+/g, '');
+
+  // 4. Comprehensive Abusive, Vulgar & Insult Keywords
+  const abusivePatterns = [
+    /f+u+c+k+/i,
+    /b+i+t+c+h+/i,
+    /s+h+i+t+/i,
+    /a+s+s+h+o+l+e+/i,
+    /b+a+s+t+a+r+d+/i,
+    /\bugly\b/i,
+    /\bworst\b/i,
+    /\btrash\b/i,
+    /\buseless\b/i,
+    /\bhate\b/i,
+    /\bidiot\b/i,
+    /\bstupid\b/i,
+    /\bfool\b/i,
+    /\bdummy\b/i,
+    /\bwaste\b/i,
+    /\bfake\b/i,
+    /\bcheat\b/i,
+    /\bscam\b/i,
+    /\bhack\b/i
+  ];
+
+  const hasAbuse = abusivePatterns.some(pattern => pattern.test(trimmed) || pattern.test(normalized));
+  if (hasAbuse) {
+    return { 
+      safe: false, 
+      error: "🚨 Subhams networks Shield Guard: Abusive, vulgar, or offensive language is strictly blocked." 
+    };
+  }
+
+  return { safe: true, text: trimmed };
+};
+
 // ==========================================
 // 1. PREMIUM DASHBOARD PORTFOLIO (CLIENT)
 // ==========================================
@@ -112,32 +167,30 @@ export function ArchitectPortfolio() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
-  const insertEmoji = (emoji) => {
-    setMessage(prev => prev + emoji);
-  };
+  // 🟢 Security Error State & Strike Counter
+  const [chatError, setChatError] = useState('');
+  const [spamStrikes, setSpamStrikes] = useState(() => {
+    return parseInt(localStorage.getItem('vpk_spam_strikes') || '0', 10);
+  });
+
+  const navigate = useNavigate();
+  const insertEmoji = (emoji) => setMessage(prev => prev + emoji);
   
   const [message, setMessage] = useState('');
   const chatEndRef = useRef(null);
   const [showBanner] = useState(true); 
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  // BUG FIX 4: TAP ANIMATION STATE
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasTappedMenu, setHasTappedMenu] = useState(false); 
-  
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [isConnected, setIsConnected] = useState(socket.connected); 
-
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [isBackendReady, setIsBackendReady] = useState(false);
   const [showBootOverlay, setShowBootOverlay] = useState(false);
-  
   const aiResponseRef = useRef(null);
   const prevLengthRef = useRef(0);
-
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
-
   const [visitorToken, setVisitorToken] = useState(null);
 
   const [chatLog, setChatLog] = useState(() => {
@@ -147,42 +200,49 @@ export function ArchitectPortfolio() {
     return parsed;
   });
 
+  // 🟢 Handles updating strikes and showing the Subhams Policy Banner
+  const handleSecurityViolation = (errorMessage) => {
+    const newStrikes = spamStrikes + 1;
+    setSpamStrikes(newStrikes);
+    localStorage.setItem('vpk_spam_strikes', newStrikes.toString());
+
+    if (newStrikes >= 3) {
+      setChatError("🚨 Subhams Networks Privacy Policy: The words you typed are completely banned. Please send a valid message to the admin regarding business, job opportunities, or genuine doubts.");
+    } else {
+      setChatError(errorMessage);
+    }
+    setTimeout(() => setChatError(''), 8000); // Show for 8 seconds
+  };
+
   useEffect(() => {
-    let isMounted = true;
-    getVisitorSession()
-      .then(session => {
-        if (isMounted) {
-          setVisitorToken(session.token);
-        }
-      })
-      .catch(error => console.error('Unable to initialize visitor session:', error));
-    return () => {
-      isMounted = false;
-    };
+    socket.emit('log_event', { type: 'visit' });
+    const trackClick = () => socket.emit('log_event', { type: 'click' });
+    document.addEventListener('click', trackClick);
+    return () => document.removeEventListener('click', trackClick);
   }, []);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.body.classList.add('dark-theme');
-    } else {
-      document.body.classList.remove('dark-theme');
-    }
+    let isMounted = true;
+    getVisitorSession()
+      .then(session => { if (isMounted) setVisitorToken(session.token); })
+      .catch(error => console.error('Unable to init visitor session:', error));
+    return () => { isMounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) document.body.classList.add('dark-theme');
+    else document.body.classList.remove('dark-theme');
   }, [isDarkMode]);
 
   useEffect(() => {
     const handleMobileRemovers = (e) => {
       if (!isMobileMenuOpen) return;
       if (e.target.closest('.mobile-menu-btn')) return;
-      if (!e.target.closest('.sidebar')) {
-        setIsMobileMenuOpen(false);
-      }
+      if (!e.target.closest('.sidebar')) setIsMobileMenuOpen(false);
     };
 
-    if (isMobileMenuOpen || isChatExpanded) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (isMobileMenuOpen || isChatExpanded) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
 
     document.addEventListener('click', handleMobileRemovers);
     return () => {
@@ -197,7 +257,7 @@ export function ArchitectPortfolio() {
 
     const checkServer = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/articles`)
+        const res = await fetch(`${BACKEND_URL}/api/articles`);
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {
@@ -211,41 +271,25 @@ export function ArchitectPortfolio() {
     };
 
     checkServer(); 
-
-    pollInterval = setInterval(() => {
-      if (!isBackendReady) checkServer();
-    }, 5000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(pollInterval);
-    };
+    pollInterval = setInterval(() => { if (!isBackendReady) checkServer(); }, 5000);
+    return () => { isMounted = false; clearInterval(pollInterval); };
   }, [isBackendReady]);
 
   useEffect(() => {
     localStorage.setItem('vpk_chat_history', JSON.stringify(chatLog));
-    if (chatLog.length > prevLengthRef.current) {
-      if (chatEndRef.current) {
-        chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
+    if (chatLog.length > prevLengthRef.current && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
     prevLengthRef.current = chatLog.length;
   }, [chatLog]);
 
   useEffect(() => {
-    if (!visitorToken) return undefined;
+    if (!visitorToken) return;
     socket.auth = { token: visitorToken };
     socket.disconnect();
     
-    const onConnect = () => {
-        setIsConnected(true);
-        socket.emit('join_visitor');
-    };
-
-    const onDisconnect = reason => {
-      setIsConnected(false);
-      if (reason === 'io server disconnect') socket.connect();
-    };
+    const onConnect = () => { setIsConnected(true); socket.emit('join_visitor'); };
+    const onDisconnect = reason => { setIsConnected(false); if (reason === 'io server disconnect') socket.connect(); };
     const onConnectError = error => {
       setIsConnected(false);
       if (error.message === 'Invalid or expired credentials') {
@@ -259,19 +303,16 @@ export function ArchitectPortfolio() {
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
     
-    // --- NEW: CATCH OFFLINE HISTORY AND TRANSLATE TO UI FORMAT ---
     const onHistorySynced = (data) => {
       if (data.status === 'success' && Array.isArray(data.history)) {
-        console.log("Got offline history!", data.history);
-        const formattedHistory = data.history.map(msg => ({
+        setChatLog(data.history.map(msg => ({
           _id: msg._id,
           type: msg.sender === 'Visitor' ? 'sent' : 'received',
           sender: msg.sender === 'Visitor' ? 'visitor' : 'admin',
           text: msg.message,
           time: cleanTimestamp(msg.timestamp), 
           reaction: msg.reaction || null
-        }));
-        setChatLog(formattedHistory);
+        })));
       }
     };
     
@@ -315,16 +356,33 @@ export function ArchitectPortfolio() {
     const onReaction = (data) => {
       setChatLog(prev => prev.map(msg => msg._id === data.messageId ? { ...msg, reaction: data.reaction } : msg));
     };
+
+    // 🟢 CATCH BACKEND SECURITY ALERTS
+    const onMessageRejected = (data) => {
+      setChatLog(prev => prev.filter(msg => !msg._id.startsWith('temp')));
+      handleSecurityViolation(`⚠️ ${data.error}`);
+    };
+
+    const onSecurityAlert = (data) => {
+      setChatError(`🚨 ${data.message}`);
+    };
+
+    const onChatWiped = () => {
+      setChatLog([]);
+      setChatError('This conversation was terminated and deleted by the Administrator.');
+    };
     
-    // Attach Listeners
     socket.on('visitor_history_synced', onHistorySynced);
     socket.on('admin_msg_received', onAdminMsg);
     socket.on('bot_reply', onBotReply);
     socket.on('msg_saved_confirmation', onMsgSaved);
     socket.on('reaction_updated', onReaction);
+    socket.on('message_rejected', onMessageRejected);
+    socket.on('security_alert', onSecurityAlert);
+    socket.on('chat_wiped_by_admin', onChatWiped);
+
     socket.connect();
     
-    // Cleanup Listeners
     return () => { 
       socket.off('connect', onConnect); 
       socket.off('disconnect', onDisconnect);
@@ -334,10 +392,14 @@ export function ArchitectPortfolio() {
       socket.off('bot_reply', onBotReply);
       socket.off('msg_saved_confirmation', onMsgSaved);
       socket.off('reaction_updated', onReaction);
+      socket.off('message_rejected', onMessageRejected);
+      socket.off('security_alert', onSecurityAlert);
+      socket.off('chat_wiped_by_admin', onChatWiped);
       socket.disconnect();
       socket.auth = {};
     };
-  }, [visitorToken]);
+  }, [visitorToken, spamStrikes]);
+
   const handleAiSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -381,9 +443,18 @@ export function ArchitectPortfolio() {
       return;
     }
 
+    // 🛑 1. FRONTEND SHIELD SCAN BEFORE EMITTING
+    const scan = scanClientMessage(message);
+    if (!scan.safe) {
+      handleSecurityViolation(scan.error);
+      return; // HARD STOP: Never reaches backend!
+    }
+
+    // 🟢 2. IF SAFE: PROCEED TO SEND
+    setChatError(''); 
     const tempId = `temp_${Date.now()}`;
-    socket.emit('stream_secure_msg', { message }); 
-    setChatLog((prev) => [...prev, { _id: tempId, type: 'sent', text: message, time: getCleanTime(), reaction: null }]);
+    socket.emit('stream_secure_msg', { message: scan.text }); 
+    setChatLog((prev) => [...prev, { _id: tempId, type: 'sent', text: scan.text, time: getCleanTime(), reaction: null }]);
     setMessage('');
     setShowEmojiPicker(false);
   };
@@ -401,10 +472,7 @@ export function ArchitectPortfolio() {
         /* 1. PREMIUM WIDGET CONTAINER */
         .wa-widget { position: relative; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; height: 550px; background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(5, 10, 21, 0.95)); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); margin-top: 10px; font-family: 'Inter', sans-serif; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; max-width: 100%; box-sizing: border-box; }
         .wa-widget::before { content: 'SUBHAMS NETWORKS'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.8rem; font-weight: 900; color: rgba(255, 255, 255, 0.02); white-space: nowrap; z-index: 0; pointer-events: none; letter-spacing: 8px; }
-        
-        /* BUG FIX 3: EXPANDED CHAT FILLS PERFECTLY */
         .expanded-chat { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; max-width: 100vw !important; height: 100vh !important; height: 100dvh !important; max-height: none !important; z-index: 100000 !important; border-radius: 0 !important; margin: 0 !important; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(5, 10, 21, 1)) !important; }
-        
         .wa-header { position: relative; z-index: 2; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); padding: 16px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; box-sizing: border-box; width: 100%; }
         .wa-avatar-container { position: relative; flex-shrink: 0; }
         .wa-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
@@ -417,13 +485,10 @@ export function ArchitectPortfolio() {
         .wa-body { position: relative; z-index: 1; flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background-color: transparent; background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 24px 24px; display: flex; flex-direction: column; gap: 18px; width: 100%; box-sizing: border-box; }
         .wa-body::-webkit-scrollbar { width: 6px; }
         .wa-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-        
         .wa-bubble { position: relative; z-index: 2; padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; word-break: break-word; white-space: pre-wrap; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
         .wa-sent { background: linear-gradient(135deg, #2563eb, #3b82f6); align-self: flex-end; border-bottom-right-radius: 4px; }
         .wa-received { background: linear-gradient(135deg, #1e293b, #0f172a); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
         .wa-time { font-size: 0.7rem; color: rgba(255,255,255,0.5); float: right; margin-left: 12px; margin-top: 6px; font-weight: 600; }
-        
-        /* REACTION SYSTEM CSS */
         .msg-emoji-trigger { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s ease; font-size: 0.8rem; z-index: 20; }
         .bubble-wrapper:hover .msg-emoji-trigger { opacity: 1; }
         .msg-emoji-trigger:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-50%) scale(1.1); }
@@ -431,21 +496,15 @@ export function ArchitectPortfolio() {
         .reaction-menu button { background: transparent; border: none; font-size: 1.3rem; cursor: pointer; transition: transform 0.2s ease; padding: 0; outline: none;}
         .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
         .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
-
-        /* BUG FIX: INPUT BUTTON OVERFLOW */
-        .wa-footer { position: relative; z-index: 2; padding: 15px 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); width: 100%; box-sizing: border-box; }
+        .wa-footer { position: relative; z-index: 2; padding: 15px 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); width: 100%; box-sizing: border-box; }
         .wa-input { flex: 1; min-width: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 14px 20px; border-radius: 30px; outline: none; font-size: 1rem; transition: all 0.3s ease; box-sizing: border-box; }
         .wa-input:focus { background: rgba(255,255,255,0.1); border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
         .wa-btn { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); transition: all 0.3s ease; flex-shrink: 0; }
         .wa-btn:hover { transform: scale(1.08) translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6); }
-        
         @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes customSpinner { to { transform: rotate(360deg); } }
-        
         .finger-indicator { position: absolute; bottom: -30px; right: 5px; font-size: 1.8rem; animation: tapBounce 1s infinite alternate; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; }
         @keyframes tapBounce { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-10px) scale(1.1); opacity: 0.8; } }
-
-        /* UPGRADED MOBILE MEDIA QUERY TO PREVENT SEND BUTTON OVERFLOW */
         @media (max-width: 1024px) {
           .wa-widget::before { font-size: 1.5rem !important; letter-spacing: 4px !important; white-space: normal !important; text-align: center; padding: 0 20px; line-height: 1.4; width: 90%; }
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
@@ -456,8 +515,6 @@ export function ArchitectPortfolio() {
           .top-search-wrapper { margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px 15px !important;}
           .wa-widget { height: 80vh; max-height: 600px; border-radius: 16px; max-width: 100vw !important; overflow: hidden; box-sizing: border-box; } 
           .articles-container, .projects-container { display: flex !important; flex-direction: column !important; width: 100% !important; }
-          
-          /* PERFECT MOBILE INPUT ALIGNMENT */
           .wa-footer { padding: 10px 12px !important; gap: 8px !important; }
           .wa-input { padding: 12px 16px !important; font-size: 0.95rem !important; }
           .wa-btn { width: 42px !important; height: 42px !important; font-size: 1rem !important; }
@@ -467,32 +524,7 @@ export function ArchitectPortfolio() {
         }
       `}} />
 
-      {showBootOverlay && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-          background: isDarkMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(30px) saturate(200%)',
-          WebkitBackdropFilter: 'blur(30px) saturate(200%)',
-          zIndex: 9999999, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: 'fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}>
-          <div style={{
-            background: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.55)',
-            border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 255, 255, 0.8)',
-            boxShadow: isDarkMode ? '0 40px 80px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.05)' : '0 40px 80px rgba(0,0,0,0.1), inset 0 1px 2px rgba(255,255,255,0.9)',
-            padding: '50px 40px', borderRadius: '32px', textAlign: 'center', maxWidth: '420px',
-            color: isDarkMode ? '#f8fafc' : '#0f172a', position: 'relative'
-          }}>
-            <button onClick={() => setShowBootOverlay(false)} style={{ position: 'absolute', top: '15px', right: '20px', background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', opacity: 0.6 }}>✕</button>
-            <div style={{ width: '45px', height: '45px', border: '4px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'customSpinner 1s linear infinite', margin: '0 auto 25px auto' }}></div>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '12px', letterSpacing: '-0.5px' }}>Initializing Server</h2>
-            <p style={{ fontWeight: '600', opacity: 0.8, lineHeight: '1.6', fontSize: '0.95rem' }}>
-              The secure architecture is waking up from its standby state. Please hold on...
-            </p>
-          </div>
-        </div>
-      )}
-    {!isChatExpanded && (
+      {!isChatExpanded && (
         <div className="ui-controls" style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 999999 }}>
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="ui-btn">
             {isDarkMode ? '🌙' : '☀️'}
@@ -502,7 +534,7 @@ export function ArchitectPortfolio() {
             className="ui-btn mobile-menu-btn"
             onClick={() => {
                 setIsMobileMenuOpen(!isMobileMenuOpen);
-                setHasTappedMenu(true); // BUG FIX 4: DISMISSES FINGER PERMANENTLY
+                setHasTappedMenu(true); 
             }}
             style={{ position: 'relative' }}
           >
@@ -512,7 +544,6 @@ export function ArchitectPortfolio() {
         </div>
       )}
 
-      {/* NEW: Dark overlay that blocks the background when the menu is open */}
       {isMobileMenuOpen && (
         <div 
           className="sidebar-overlay" 
@@ -538,6 +569,10 @@ export function ArchitectPortfolio() {
           <a href="https://dev.to/vpkstarspace" target="_blank" rel="noopener noreferrer" className="social-link link-devto"><span>👨‍💻</span> Dev.to</a>
           <a href="mailto:pavanvenkat63@gmail.com" className="social-link link-mail"><span>✉️</span> pavanvenkat63@gmail.com</a>
           <a href="https://youtube.com/shorts/9GhIOfa2z4U" target="_blank" rel="noopener noreferrer" className="social-link link-youtube"><span>▶️</span> YouTube</a>
+          
+          <Link to="/legal" className="social-link" style={{ background: 'rgba(255,255,255,0.05)', marginTop: '20px', border: '1px dashed rgba(255,255,255,0.2)', justifyContent: 'center' }}>
+            <span style={{ fontSize: '1rem' }}>🛡️</span> Legal & Privacy Policy
+          </Link>
         </div>
       </aside>
 
@@ -547,6 +582,7 @@ export function ArchitectPortfolio() {
             <a href="#projects" className="top-nav-link">Live Links</a>
             <a href="#articles" className="top-nav-link">Articles</a>
             <a href="#contact" className="top-nav-link">Get in Touch</a>
+            <Link to="/legal" className="top-nav-link" style={{ color: '#60a5fa' }}>Legal</Link>
           </div>
           
           <form onSubmit={handleAiSubmit} className="top-search-wrapper">
@@ -658,30 +694,15 @@ export function ArchitectPortfolio() {
                   <img src="/profile.png" alt="Venkata Pavan Kumar" className="wa-avatar" />
                   <span className="status-dot" style={{ background: isConnected ? '#22c55e' : '#f59e0b', boxShadow: isConnected ? '0 0 8px rgba(34, 197, 94, 0.6)' : 'none' }}></span>
                 </div>
-                <div
-  className="wa-header-text"
-  style={{
-    minWidth: 0,
-    flex: 1
-  }}
->
-  <h3
-    style={{
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      margin: 0,
-      fontSize: '1rem'
-    }}
-  >
-    Venkata Pavan Kumar
-  </h3>
-
-  <p>
-    <span style={{ color: isConnected ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span>
-    {isConnected ? 'System Architect Online' : 'Connecting to Server...'}
-  </p>
-</div>
+                <div className="wa-header-text" style={{ minWidth: 0, flex: 1 }}>
+                  <h3 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0, fontSize: '1rem' }}>
+                    Venkata Pavan Kumar
+                  </h3>
+                  <p>
+                    <span style={{ color: isConnected ? '#22c55e' : '#f59e0b', fontSize: '1.2rem' }}>•</span>
+                    {isConnected ? 'System Architect Online' : 'Connecting to Server...'}
+                  </p>
+                </div>
                 <button 
                   className="chat-expand-btn"
                   onClick={() => setIsChatExpanded(!isChatExpanded)} 
@@ -721,7 +742,7 @@ export function ArchitectPortfolio() {
                         )}
 
                         {hoveredMsgId === log._id && log._id && !log._id.includes('temp') && (
-                            <div className="reaction-menu" style={{ [log.type === 'sent' ? 'right' : 'left']: '10px' }}>
+                            <div className="reaction-menu" style={{ [log.type === 'sent' ? 'right' : 'left']: '10px', top: '-40px' }}>
                                 {quickReactions.map(emoji => (
                                     <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(log._id, emoji); }}>{emoji}</button>
                                 ))}
@@ -737,7 +758,7 @@ export function ArchitectPortfolio() {
                       <span className="wa-time">{log.time}</span>
 
                       {log.reaction && (
-                          <div className="msg-reaction" style={{ [log.type === 'sent' ? 'right' : 'left']: '5px' }}>
+                          <div className="msg-reaction" style={{ [log.type === 'sent' ? 'right' : 'left']: '5px', position: 'absolute', bottom: '-12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', padding: '4px 6px', fontSize: '0.85rem' }}>
                               {log.reaction}
                           </div>
                       )}
@@ -747,46 +768,86 @@ export function ArchitectPortfolio() {
                 <div ref={chatEndRef} />
               </div>
 
-              <div className="wa-footer" style={{ position: 'relative' }}>
-                <button 
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
-                  style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', outline: 'none', padding: '0 5px' }}
-                  title="Insert Emoji"
-                >
-                  +
-                </button>
-
-                {showEmojiPicker && (
-                  <div style={{ position: 'absolute', bottom: '75px', left: '20px', background: 'rgba(15,23,42,0.95)', padding: '12px', borderRadius: '16px', display: 'flex', gap: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 100 }}>
-                    {['👍', '❤️', '😂', '🔥', '👀', '✅', '🚀', '💯'].map(emoji => (
-                      <button key={emoji} onClick={() => insertEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', transition: '0.2s' }}>
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+              <div className="wa-footer" style={{ position: 'relative', flexDirection: 'column' }}>
+                
+                {/* 🔴 RED SECURITY WARNING BANNER */}
+                {chatError && (
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: '-65px', 
+                      left: '10px', 
+                      right: '10px', 
+                      background: 'rgba(220, 38, 38, 0.98)', 
+                      color: 'white', 
+                      padding: '12px 16px', 
+                      borderRadius: '12px', 
+                      fontSize: '0.85rem', 
+                      fontWeight: 'bold', 
+                      boxShadow: '0 8px 25px rgba(220, 38, 38, 0.5)', 
+                      zIndex: 99, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px', 
+                      border: '1px solid #ef4444', 
+                      animation: 'popIn 0.3s forwards',
+                      lineHeight: '1.4'
+                    }}>
+                        <AlertTriangle size={24} color="#fff" style={{ flexShrink: 0 }} />
+                        <span>{chatError}</span>
+                    </div>
                 )}
 
-                <input 
-                  className="wa-input" 
-                  value={message} 
-                  onChange={e => setMessage(e.target.value)} 
-                  placeholder="Type a message to Pavan..." 
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
-                />
-                <button onClick={handleSendMessage} className="wa-btn">➤</button>
+                <div style={{ display: 'flex', width: '100%', gap: '12px' }}>
+                  <button 
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+                    style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', outline: 'none', padding: '0 5px' }}
+                    title="Insert Emoji"
+                  >
+                    +
+                  </button>
+
+                  {showEmojiPicker && (
+                    <div style={{ position: 'absolute', bottom: '75px', left: '20px', background: 'rgba(15,23,42,0.95)', padding: '12px', borderRadius: '16px', display: 'flex', gap: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 100 }}>
+                      {['👍', '❤️', '😂', '🔥', '👀', '✅', '🚀', '💯'].map(emoji => (
+                        <button key={emoji} onClick={() => insertEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', transition: '0.2s' }}>
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <input 
+                    className="wa-input" 
+                    value={message} 
+                    onChange={e => {
+                      setMessage(e.target.value);
+                      if (chatError) setChatError('');
+                    }} 
+                    placeholder="Type a message to Pavan..." 
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
+                    style={chatError ? { border: '2px solid #ef4444', background: 'rgba(239,68,68,0.1)' } : {}}
+                  />
+                  <button onClick={handleSendMessage} className="wa-btn">➤</button>
+                </div>
               </div>
             </div>
           </section>
 
-          <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '30px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '30px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '10px' }}>
               <span style={{ animation: 'float-sparkle 2s ease-in-out infinite', fontSize: '13px' }}>✨</span>
               <p style={{ fontSize: '10px', color: '#64748b', fontWeight: '800', margin: 0, letterSpacing: '1.5px' }}>POWERED BY <span className="subhams-brand-text">SUBHAMS</span></p>
               <span style={{ animation: 'float-sparkle 2s ease-in-out infinite 1s', fontSize: '13px' }}>✨</span>
             </div>
-            <div style={{ height: '3px', width: '40px', background: 'linear-gradient(90deg, transparent, #3b82f6, #a855f7, transparent)', margin: '8px auto 0 auto', borderRadius: '10px', animation: 'line-breathe 3s ease-in-out infinite' }}></div>
-          </div>
+            
+            <div style={{ marginTop: '10px' }}>
+                <Link to="/legal" style={{ fontSize: '11px', color: '#64748b', textDecoration: 'none', fontWeight: '600', transition: 'color 0.2s' }} onMouseOver={(e) => e.target.style.color = '#3b82f6'} onMouseOut={(e) => e.target.style.color = '#64748b'}>
+                  Privacy Policy & Terms
+                </Link>
+            </div>
 
+            <div style={{ height: '3px', width: '30px', background: 'linear-gradient(90deg, transparent, #3b82f6, #a855f7, transparent)', margin: '8px auto 0 auto', borderRadius: '10px', animation: 'line-breathe 3s ease-in-out infinite' }}></div>
+          </div>
         </div>
       </main>
     </div>
@@ -807,7 +868,7 @@ export function ArticleView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-  fetch(`${BACKEND_URL}/api/articles/${slug}`)
+    fetch(`${BACKEND_URL}/api/articles/${slug}`)
       .then(res => res.json())
       .then(data => setArticle(data))
       .catch(err => console.error(err));
@@ -859,7 +920,7 @@ export function ArticleView() {
   if (!article) return <div style={{ color: '#8696a0', textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', fontWeight: 'bold' }}>Booting infrastructure...</div>;
 
   return (
-  <div className="article-page-wrapper">
+    <div className="article-page-wrapper">
       <Helmet>
         <title>{article.title} | Venkata Pavan Kumar</title>
         <meta name="description" content={cleanDescription} />
@@ -872,7 +933,7 @@ export function ArticleView() {
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={cleanDescription} />
       </Helmet>
-     <nav className="article-nav">
+      <nav className="article-nav">
         <button onClick={() => navigate('/')} className="back-btn">← Back to Portfolio</button>
       </nav>
       
@@ -944,6 +1005,13 @@ export function ArticleView() {
           <p style={{ fontSize: '10px', color: '#64748b', fontWeight: '800', margin: 0, letterSpacing: '1.5px' }}>POWERED BY <span className="subhams-brand-text">SUBHAMS</span></p>
           <span style={{ animation: 'float-sparkle 2s ease-in-out infinite 1s', fontSize: '13px' }}>✨</span>
         </div>
+        
+        <div style={{ marginTop: '10px' }}>
+            <Link to="/legal" style={{ fontSize: '11px', color: '#64748b', textDecoration: 'none', fontWeight: '600', transition: 'color 0.2s' }} onMouseOver={(e) => e.target.style.color = '#3b82f6'} onMouseOut={(e) => e.target.style.color = '#64748b'}>
+              Privacy Policy & Terms
+            </Link>
+        </div>
+
         <div style={{ height: '3px', width: '30px', background: 'linear-gradient(90deg, transparent, #3b82f6, #a855f7, transparent)', margin: '8px auto 0 auto', borderRadius: '10px', animation: 'line-breathe 3s ease-in-out infinite' }}></div>
       </div>
     </div>
@@ -960,6 +1028,8 @@ export function AdminDashboard() {
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   
+  const [analytics, setAnalytics] = useState({ visits: 0, clicks: 0, searches: 0 });
+
   const [conversations, setConversations] = useState(() => {
     const savedChats = localStorage.getItem('admin_chats');
     return savedChats ? JSON.parse(savedChats) : {};
@@ -977,10 +1047,8 @@ export function AdminDashboard() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); 
   const quickReactions = ['👍', '❤️', '😂', '🔥', '👀'];
   
-/* BULLETPROOF SCROLL FIX: Targets the container's scrollbar directly */
   useEffect(() => {
     if (chatContainerRef.current && adminView === 'chats') {
-      // 50ms timeout guarantees React has physically drawn the new message on screen
       setTimeout(() => {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
       }, 50);
@@ -1075,6 +1143,17 @@ export function AdminDashboard() {
       });
     };
 
+    const onAnalyticsUpdate = (data) => {
+      setAnalytics(data);
+    };
+
+    const onChatDeletedSuccess = (data) => {
+      const updatedChats = { ...conversations };
+      delete updatedChats[data.roomId];
+      setConversations(updatedChats);
+      if (activeRoom === data.roomId) setActiveRoom(null);
+    };
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
@@ -1082,6 +1161,8 @@ export function AdminDashboard() {
     socket.on('new_visitor_msg', onNewVisitorMsg);
     socket.on('reaction_updated', onReaction);
     socket.on('admin_msg_saved', onAdminSaved);
+    socket.on('analytics_update', onAnalyticsUpdate);
+    socket.on('chat_deleted_success', onChatDeletedSuccess);
 
     socket.connect();
 
@@ -1093,6 +1174,8 @@ export function AdminDashboard() {
       socket.off('new_visitor_msg', onNewVisitorMsg);
       socket.off('reaction_updated', onReaction);
       socket.off('admin_msg_saved', onAdminSaved);
+      socket.off('analytics_update', onAnalyticsUpdate);
+      socket.off('chat_deleted_success', onChatDeletedSuccess);
       socket.disconnect();
       socket.auth = {};
     };
@@ -1162,6 +1245,12 @@ export function AdminDashboard() {
     if (activeRoom === roomId) setActiveRoom(null);
   };
 
+  const wipeConversation = (roomId) => {
+    if(window.confirm("Are you sure you want to permanently delete this chat from the database? This cannot be undone.")) {
+      socket.emit('delete_conversation', { roomId });
+    }
+  };
+
   const handleReact = (messageId, reaction, roomId) => {
     if(!messageId || messageId.startsWith('temp')) return; 
     
@@ -1187,7 +1276,7 @@ export function AdminDashboard() {
     e.preventDefault();
     if(!articleTitle || !articleContent) return alert("Title and Content required.");
     try {
-    const response = await fetch(`${BACKEND_URL}/api/articles`, {
+      const response = await fetch(`${BACKEND_URL}/api/articles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1231,11 +1320,11 @@ export function AdminDashboard() {
   }
 
   return (
-<div className="admin-wrapper" style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: '#050a15', fontFamily: "'Inter', sans-serif" }}>
+    <div className="admin-wrapper" style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: '#050a15', fontFamily: "'Inter', sans-serif" }}>
       
       <style dangerouslySetInnerHTML={{ __html: `
         .admin-sidebar { width: 350px; flex-shrink: 0; background: rgba(15, 23, 42, 0.95); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; z-index: 10; backdrop-filter: blur(20px); }
-       .admin-main { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(5, 10, 21, 1) 100%); min-height: 0; }
+        .admin-main { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(5, 10, 21, 1) 100%); min-height: 0; }
         .room-item:hover { background: rgba(255,255,255,0.05); }
         .room-item.active { background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; }
         
@@ -1253,17 +1342,16 @@ export function AdminDashboard() {
         .reaction-menu button:hover { transform: scale(1.4) translateY(-3px); }
         .msg-reaction { position: absolute; bottom: -12px; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 4px 6px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 5; }
 
-        /* BUG FIX: Mobile Back Button Logic */
         .mobile-back-btn { display: none !important; }
 
         @media (max-width: 768px) {
           .msg-emoji-trigger { opacity: 1 !important; width: 24px; height: 24px; font-size: 0.7rem; }
           .admin-wrapper { flex-direction: column; }
           .admin-sidebar { width: 100%; flex: 1; display: ${activeRoom || adminView === 'write' ? 'none' : 'flex'} !important; border-right: none; }
-         .admin-main { display: ${activeRoom || adminView === 'write' ? 'flex' : 'none'} !important; flex: 1; width: 100%; min-height: 0 !important; }
+          .admin-main { display: ${activeRoom || adminView === 'write' ? 'flex' : 'none'} !important; flex: 1; width: 100%; min-height: 0 !important; }
           .chat-window { padding: 20px 5% !important; }
-          .write-article-container { padding: 20px !important; } /* Better padding on mobile */
-          .mobile-back-btn { display: flex !important; } /* Show back button only on mobile */
+          .write-article-container { padding: 20px !important; } 
+          .mobile-back-btn { display: flex !important; } 
         }
       `}} />
 
@@ -1282,6 +1370,13 @@ export function AdminDashboard() {
                 <button onClick={handleAdminLogout} style={{ background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', borderRadius: '6px', padding: '6px 9px', cursor: 'pointer' }}>Sign out</button>
               </div>
             </div>
+
+            <div style={{ padding: '10px 20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#94a3b8' }}>
+                <span title="Total Visits">👁️ {analytics.visits}</span>
+                <span title="Total Clicks">🖱️ {analytics.clicks}</span>
+                <span title="AI Searches">🔍 {analytics.searches}</span>
+            </div>
+
             <div style={{ overflowY: 'auto', flex: 1 }}>
               {Object.keys(conversations).length === 0 ? (
                   <div style={{ padding: '30px', color: '#64748b', textAlign: 'center', fontWeight: '600' }}>No active users detected.</div>
@@ -1301,7 +1396,7 @@ export function AdminDashboard() {
                         </div>
                       </div>
                     </button>
-                  )
+                  );
                 })
               )}
             </div>
@@ -1312,8 +1407,6 @@ export function AdminDashboard() {
       <main className="admin-main">
         {adminView === 'write' ? (
           <div className="write-article-container" style={{ padding: '40px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-            
-            {/* BUG FIX: Added Back Button for Mobile Article Writer */}
             <button 
               className="mobile-back-btn" 
               onClick={() => setAdminView('chats')}
@@ -1330,10 +1423,9 @@ export function AdminDashboard() {
             </form>
           </div>
         ) : (
-              activeRoom ? (
-
-<div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
-             <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+          activeRoom ? (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
+              <div className="chat-header" style={{ padding: '15px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div className="avatar" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
                   <div>
@@ -1345,28 +1437,52 @@ export function AdminDashboard() {
                   </div>
                 </div>
                 
-                <button 
-                  onClick={() => setActiveRoom(null)} 
-                  style={{ 
-                    background: 'rgba(239,68,68,0.15)', 
-                    border: '1px solid rgba(239,68,68,0.3)', 
-                    color: '#ef4444', 
-                    padding: '10px 18px', 
-                    borderRadius: '20px', 
-                    cursor: 'pointer', 
-                    fontWeight: '800',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: '0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.25)'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
-                >
-                  ✕ Close Chat
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={() => wipeConversation(activeRoom)} 
+                    style={{ 
+                      background: 'rgba(239,68,68,0.15)', 
+                      border: '1px solid rgba(239,68,68,0.3)', 
+                      color: '#ef4444', 
+                      padding: '10px 18px', 
+                      borderRadius: '20px', 
+                      cursor: 'pointer', 
+                      fontWeight: '800',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: '0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.25)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
+                  >
+                    🗑️ Delete Chat
+                  </button>
+
+                  <button 
+                    onClick={() => setActiveRoom(null)} 
+                    style={{ 
+                      background: 'rgba(255,255,255,0.05)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      color: '#cbd5e1', 
+                      padding: '10px 18px', 
+                      borderRadius: '20px', 
+                      cursor: 'pointer', 
+                      fontWeight: '800',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: '0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  >
+                    ✕ Close
+                  </button>
+                </div>
               </div>
-<div ref={chatContainerRef} className="chat-window" style={{ flex: 1, padding: '30px 10%', overflowY: 'auto', minHeight: 0 }}>
+
+              <div ref={chatContainerRef} className="chat-window" style={{ flex: 1, padding: '30px 10%', overflowY: 'auto', minHeight: 0 }}>
                 <div style={{ textAlign: 'center', margin: '15px 0' }}>
                   <span style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>
                     🔒 Secure Admin Channel
@@ -1382,25 +1498,23 @@ export function AdminDashboard() {
                     onMouseLeave={() => setHoveredMsgId(null)}
                     onClick={() => setHoveredMsgId(hoveredMsgId === m._id ? null : m._id)}
                   >
-                    
                     <div className={`wa-bubble ${m.sender === 'admin' ? 'wa-sent' : 'wa-received'}`}>
-
                       {m._id && !m._id.includes('temp') && (
-                          <button 
-                              className="msg-emoji-trigger" 
-                              style={{ [m.sender === 'admin' ? 'left' : 'right']: '-40px' }}
-                              onClick={(e) => { e.stopPropagation(); setHoveredMsgId(hoveredMsgId === m._id ? null : m._id); }}
-                          >
-                              +
-                          </button>
+                        <button 
+                          className="msg-emoji-trigger" 
+                          style={{ [m.sender === 'admin' ? 'left' : 'right']: '-40px' }}
+                          onClick={(e) => { e.stopPropagation(); setHoveredMsgId(hoveredMsgId === m._id ? null : m._id); }}
+                        >
+                          +
+                        </button>
                       )}
 
                       {hoveredMsgId === m._id && m._id && !m._id.includes('temp') && (
-                          <div className="reaction-menu" style={{ [m.sender === 'admin' ? 'right' : 'left']: '10px', top: '-40px' }}>
-                              {quickReactions.map(emoji => (
-                                  <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(m._id, emoji, activeRoom); }}>{emoji}</button>
-                              ))}
-                          </div>
+                        <div className="reaction-menu" style={{ [m.sender === 'admin' ? 'right' : 'left']: '10px', top: '-40px' }}>
+                          {quickReactions.map(emoji => (
+                            <button key={emoji} onClick={(e) => { e.stopPropagation(); handleReact(m._id, emoji, activeRoom); }}>{emoji}</button>
+                          ))}
+                        </div>
                       )}
 
                       {m.sender !== 'admin' && (
@@ -1413,20 +1527,17 @@ export function AdminDashboard() {
                       <span className="wa-time">{m.time}</span>
                       
                       {m.reaction && (
-                          <div className="msg-reaction" style={{ [m.sender === 'admin' ? 'right' : 'left']: '5px', position: 'absolute', bottom: '-12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', padding: '4px 6px', fontSize: '0.85rem' }}>
-                              {m.reaction}
-                          </div>
+                        <div className="msg-reaction" style={{ [m.sender === 'admin' ? 'right' : 'left']: '5px', position: 'absolute', bottom: '-12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', padding: '4px 6px', fontSize: '0.85rem' }}>
+                          {m.reaction}
+                        </div>
                       )}
-
                     </div>
                   </div>
                 ))}
-                {/* BUG FIX: Added a 1px height so the browser scroll engine actually has something physical to grab onto */}
                 <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
               </div>
 
               <div className="admin-input-area" style={{ padding: '20px 30px', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '15px', position: 'relative' }}>
-                
                 <button 
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
                   style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', outline: 'none', transition: '0.2s', padding: '0 5px' }}
@@ -1455,7 +1566,7 @@ export function AdminDashboard() {
                   onFocus={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
                   onBlur={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
                 />
-                <button onClick={() => sendReply(activeRoom)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', border: 'none', width: '55px', height: '55px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(59,130,246,0.4)', transition: '0.2s', flexShrink: 0 }} onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'} onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}>➤</button>
+                <button onClick={() => sendReply(activeRoom)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', border: 'none', width: '55px', height: '55px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(59,130,246,0.4)' }}>➤</button>
               </div>
             </div>
           ) : (
@@ -1471,9 +1582,6 @@ export function AdminDashboard() {
   );
 }
 
-// ==========================================
-// 4. SECURE ROUTER
-// ==========================================
 export default function App() {
   const adminPath = import.meta.env.VITE_ADMIN_ROUTE || "/fallback-admin-route";
   return (
@@ -1482,6 +1590,7 @@ export default function App() {
         <Route path="/" element={<ArchitectPortfolio />} />
         <Route path="/article/:slug" element={<ArticleView />} />
         <Route path={adminPath} element={<AdminDashboard />} />
+        <Route path="/legal" element={<LegalPolicy />} />
       </Routes>
     </BrowserRouter>
   );
