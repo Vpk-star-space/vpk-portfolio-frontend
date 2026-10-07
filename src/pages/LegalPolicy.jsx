@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, Globe, Printer, PieChart, Store, AlertTriangle, Server, Info, ArrowLeft, Languages, MessageSquare } from 'lucide-react';
+import { ShieldCheck, Globe, Printer, PieChart, Store, AlertTriangle, Server, Info, ArrowLeft, Languages, MessageSquare, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const FOUNDER = 'Venkata Pavan Kumar Amarthaluri';
 
 const meta = [
     { id: 'site', icon: Globe, color: '#3b82f6', url: 'subhamsnetworks.in', name: 'Subhams Networks' },
@@ -18,6 +20,12 @@ const content = {
         introTitle: 'Introduction',
         introText: 'This page covers every Subhams Networks app. We collect as little data as we can and keep it secure. By using our apps, you agree to these terms.',
         status: ['Status', 'Subhams Agent and PMMS are live. Subhams Hub is still in development, so expect frequent updates and changes.'],
+        founderText: 'The entire Subhams ecosystem (website, Agent, PMMS and Hub) is built and operated by', founderRole: 'Founder & CEO',
+        safeTitle: 'Data we collect and how it is protected',
+        safe: [['Email only', 'The only personal detail we store for your account is your email address, kept securely with the platforms listed below. In PMMS you also store the numbers you enter yourself.'],
+            ['No sensitive data', 'We do not collect sensitive personal data, and we have not built any system to collect it.'],
+            ['Passwords', 'Passwords are stored in encrypted form, so we cannot see them. If you sign in with Google, Google handles your password and we never see it.'],
+            ['Legal action', 'We do not ask you for any other personal data. We do not handle or take part in legal action on your side, to the extent permitted by law.']],
         glanceTitle: 'At a glance', glanceHead: ['App', 'Login', 'Data we receive'],
         appsTitle: 'Rules for each app',
         apps: {
@@ -25,15 +33,16 @@ const content = {
                 ['No accounts', 'The main site needs no sign-up, Google login or account.'],
                 ['No ad trackers', 'We run no analytics or advertising trackers. Our hosting providers may log technical data such as your IP address.'],
                 ['Contact chat', 'Your messages go to the Administrator and are used only to reply to you.']] },
-            agent: { login: 'Customers: none. Shops: Email or Google', data: 'A Job ID. Shops: account and ID ', points: [
-                ['Customers', 'No sign-up or phone permission. The temporary name in you enter stays only on your device Untill if send it Shop in copies They Saw only recognize Purpose,Your name it only temporary in Your sending Shop.'],
-                ['Uploads', 'Files are encrypted in transit and sent to the shop. Our servers do not store them; our database records only a Job ID in temporary only.'],
+            agent: { login: 'Customers: none. Shops: Email or Google', data: 'A Job ID. Shops: account details', points: [
+                ['Customers', 'No sign-up or phone permission. The temporary name you enter stays on your device. If it is sent to the shop, the shop sees it only to recognise your print job, and it is temporary.'],
+                ['Uploads', 'Files are encrypted in transit and sent to the shop. Our servers do not store them; our database records only a Job ID, temporarily.'],
                 ['10-minute auto-delete', 'Files are deleted from the shop queue within 10 minutes, printed or not.'],
-                ['Shops', 'Owners register with Email or Google and  to verify the shop. Breaking the printing rules leads to permanent removal.']] },
+                ['Shops', 'Owners register with Email or Google to verify the shop. Breaking the printing rules leads to permanent removal.']] },
             pmms: { login: 'Email or Google', data: 'Only numbers you enter yourself', points: [
                 ['Your data', 'We do not sell or share your financial data, except with the providers below that store it for us.'],
                 ['Manual entry only', 'PMMS is a closed system that processes only the figures you type in.'],
-                ['Sign-in', 'Accounts use Email or Google login.']] },
+                ['Sign-in', 'Accounts use Email or Google login.'],
+                ['Permissions', 'PMMS asks for your permission to send notifications and emails. You can allow or turn them off at any time in your device settings.']] },
             hub: { login: 'Google', data: 'Google profile details; your location while using the app', points: [
                 ['Location', 'Used only to show nearby active shops. We do not track you in the background after you close the app, or build profiles from your movements.'],
                 ['Sign-in', 'You log in with Google. We use basic profile details, such as name and email, only to run your account.'],
@@ -66,6 +75,12 @@ const content = {
         introTitle: 'పరిచయం',
         introText: 'ఈ పేజీ సుభమ్స్ నెట్‌వర్క్స్ యాప్‌లన్నింటికీ వర్తిస్తుంది. మేము వీలైనంత తక్కువ డేటాను సేకరిస్తాము మరియు దానిని సురక్షితంగా ఉంచుతాము. మా యాప్‌లను ఉపయోగించడం ద్వారా మీరు ఈ నిబంధనలకు అంగీకరిస్తున్నారు.',
         status: ['స్థితి', 'సుభమ్స్ ఏజెంట్ మరియు PMMS అందుబాటులో ఉన్నాయి. సుభమ్స్ హబ్ ఇంకా అభివృద్ధిలో ఉంది, కాబట్టి తరచుగా మార్పులు ఉండవచ్చు.'],
+        founderText: 'మొత్తం సుభమ్స్ ఎకోసిస్టమ్‌ను (వెబ్‌సైట్, ఏజెంట్, PMMS మరియు హబ్) రూపొందించి నడుపుతున్నవారు', founderRole: 'వ్యవస్థాపకుడు & CEO',
+        safeTitle: 'మేము సేకరించే డేటా & దాని రక్షణ',
+        safe: [['ఇమెయిల్ మాత్రమే', 'మీ ఖాతా కోసం మేము నిల్వ చేసే ఏకైక వ్యక్తిగత వివరం మీ ఇమెయిల్ చిరునామా; ఇది కింద జాబితా చేసిన ప్లాట్‌ఫారమ్‌లలో సురక్షితంగా ఉంటుంది. PMMSలో మీరు స్వయంగా నమోదు చేసే సంఖ్యలు కూడా నిల్వ అవుతాయి.'],
+            ['సున్నితమైన డేటా లేదు', 'మేము సున్నితమైన వ్యక్తిగత డేటాను సేకరించము, మరియు దానిని సేకరించే ఏ వ్యవస్థనూ నిర్మించలేదు.'],
+            ['పాస్‌వర్డ్‌లు', 'పాస్‌వర్డ్‌లు గుప్తీకరించిన రూపంలో నిల్వ చేయబడతాయి, కాబట్టి మేము వాటిని చూడలేము. మీరు Googleతో లాగిన్ అయితే, మీ పాస్‌వర్డ్‌ను Google నిర్వహిస్తుంది; మేము దానిని ఎప్పుడూ చూడము.'],
+            ['చట్టపరమైన చర్యలు', 'మేము మిమ్మల్ని మరే ఇతర వ్యక్తిగత డేటా అడగము. చట్టం అనుమతించిన మేరకు, మీ వైపు జరిగే చట్టపరమైన చర్యలను మేము నిర్వహించము లేదా వాటిలో పాల్గొనము.']],
         glanceTitle: 'ఒక చూపులో', glanceHead: ['యాప్', 'లాగిన్', 'మేము స్వీకరించే డేటా'],
         appsTitle: 'ప్రతి యాప్‌కు నియమాలు',
         apps: {
@@ -73,15 +88,16 @@ const content = {
                 ['ఖాతాలు అవసరం లేదు', 'ప్రధాన సైట్‌కు సైన్-అప్, Google లాగిన్ లేదా ఖాతా అవసరం లేదు.'],
                 ['ప్రకటన ట్రాకర్లు లేవు', 'మేము అనలిటిక్స్ లేదా ప్రకటన ట్రాకర్లను ఉపయోగించము. మా హోస్టింగ్ ప్రొవైడర్లు మీ IP చిరునామా వంటి సాంకేతిక డేటాను లాగ్ చేయవచ్చు.'],
                 ['కాంటాక్ట్ చాట్', 'మీ సందేశాలు అడ్మినిస్ట్రేటర్‌కు వెళ్తాయి మరియు మీకు సమాధానం ఇవ్వడానికి మాత్రమే ఉపయోగిస్తాము.']] },
-            agent: { login: 'కస్టమర్లు: లేదు. షాపులు: ఇమెయిల్ లేదా Google', data: 'జాబ్ ID. షాపులు: ఖాతా మరియు ID పత్రాలు', points: [
-                ['కస్టమర్లు', 'సైన్-అప్ లేదా ఫోన్ అనుమతి అవసరం లేదు. మీరు నమోదు చేసే తాత్కాలిక పేరు మీ పరికరంలోనే ఉంటుంది.'],
-                ['అప్‌లోడ్‌లు', 'ఫైల్‌లు గుప్తీకరించబడి షాప్‌కు పంపబడతాయి. మా సర్వర్‌లు వాటిని నిల్వ చేయవు; మా డేటాబేస్ కేవలం జాబ్ IDని నమోదు చేస్తుంది.'],
+            agent: { login: 'కస్టమర్లు: లేదు. షాపులు: ఇమెయిల్ లేదా Google', data: 'జాబ్ ID. షాపులు: ఖాతా వివరాలు', points: [
+                ['కస్టమర్లు', 'సైన్-అప్ లేదా ఫోన్ అనుమతి అవసరం లేదు. మీరు నమోదు చేసే తాత్కాలిక పేరు మీ పరికరంలోనే ఉంటుంది. అది షాప్‌కు పంపితే, మీ ప్రింట్ జాబ్‌ను గుర్తించడానికి మాత్రమే షాప్ దానిని చూస్తుంది; ఆ పేరు తాత్కాలికం.'],
+                ['అప్‌లోడ్‌లు', 'ఫైల్‌లు గుప్తీకరించబడి షాప్‌కు పంపబడతాయి. మా సర్వర్‌లు వాటిని నిల్వ చేయవు; మా డేటాబేస్ కేవలం జాబ్ IDని తాత్కాలికంగా మాత్రమే నమోదు చేస్తుంది.'],
                 ['10 నిమిషాల ఆటో-డిలీట్', 'ప్రింట్ అయినా కాకపోయినా, ఫైల్‌లు 10 నిమిషాలలోపు షాప్ క్యూ నుండి తొలగించబడతాయి.'],
-                ['షాపులు', 'యజమానులు ఇమెయిల్ లేదా Google ద్వారా నమోదు చేసి, షాప్‌ను ధృవీకరించడానికి ID పత్రాలను అప్‌లోడ్ చేయాలి. ప్రింటింగ్ నియమాలను ఉల్లంఘిస్తే శాశ్వతంగా తొలగించబడతారు.']] },
+                ['షాపులు', 'షాప్‌ను ధృవీకరించడానికి యజమానులు ఇమెయిల్ లేదా Google ద్వారా నమోదు చేసుకోవాలి. ప్రింటింగ్ నియమాలను ఉల్లంఘిస్తే శాశ్వతంగా తొలగించబడతారు.']] },
             pmms: { login: 'ఇమెయిల్ లేదా Google', data: 'మీరు స్వయంగా నమోదు చేసే సంఖ్యలు మాత్రమే', points: [
                 ['మీ డేటా', 'మేము మీ ఆర్థిక డేటాను విక్రయించము లేదా పంచుకోము; దానిని మా కోసం నిల్వ చేసే కింది ప్రొవైడర్లు మాత్రమే మినహాయింపు.'],
                 ['మాన్యువల్ ఎంట్రీ మాత్రమే', 'PMMS అనేది మీరు టైప్ చేసే సంఖ్యలను మాత్రమే ప్రాసెస్ చేసే క్లోజ్డ్ సిస్టమ్.'],
-                ['సైన్-ఇన్', 'ఖాతాలు ఇమెయిల్ లేదా Google లాగిన్‌ను ఉపయోగిస్తాయి.']] },
+                ['సైన్-ఇన్', 'ఖాతాలు ఇమెయిల్ లేదా Google లాగిన్‌ను ఉపయోగిస్తాయి.'],
+                ['అనుమతులు', 'PMMS మీకు నోటిఫికేషన్‌లు మరియు ఇమెయిల్‌లు పంపడానికి మీ అనుమతిని అడుగుతుంది. మీ పరికర సెట్టింగ్‌లలో ఎప్పుడైనా వాటిని అనుమతించవచ్చు లేదా ఆపివేయవచ్చు.']] },
             hub: { login: 'Google', data: 'Google ప్రొఫైల్ వివరాలు; యాప్ వాడుతున్నప్పుడు మీ స్థానం', points: [
                 ['స్థానం', 'సమీపంలోని యాక్టివ్ షాపులను చూపించడానికి మాత్రమే. యాప్ మూసిన తర్వాత నేపథ్యంలో ట్రాక్ చేయము, మీ కదలికల ఆధారంగా ప్రొఫైల్‌లు నిర్మించము.'],
                 ['సైన్-ఇన్', 'మీరు Google ద్వారా లాగిన్ అవుతారు. పేరు, ఇమెయిల్ వంటి ప్రాథమిక ప్రొఫైల్ వివరాలను మీ ఖాతా నడపడానికి మాత్రమే ఉపయోగిస్తాము.'],
@@ -109,62 +125,73 @@ const content = {
 };
 
 const css = `
-.lg{--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#64748b;--line:#e2e8f0;--brand:#2563eb;--soft:#eff6ff;--warn:#fef2f2;--warnline:#fecaca;--tlbg:#fef9c3;--tltext:#713f12;--tlline:#fde047;
-background:var(--bg);color:var(--text);min-height:100vh;font-family:'Inter',system-ui,sans-serif;line-height:1.7;padding-bottom:40px}
+.lg{--bg:#eef3fb;--card:rgba(255,255,255,.58);--text:#1e293b;--muted:#5b6b82;--line:rgba(255,255,255,.75);--sep:rgba(100,116,139,.22);--brand:#2563eb;--soft:rgba(37,99,235,.1);--warn:rgba(239,68,68,.1);--warnline:rgba(239,68,68,.35);--tlbg:rgba(253,224,71,.5);--tltext:#713f12;--tlline:rgba(250,204,21,.8);--shadow:0 10px 32px rgba(30,58,138,.14);--hi:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.3);
+position:relative;background:var(--bg);color:var(--text);min-height:100vh;font-family:'Inter',system-ui,sans-serif;line-height:1.7;padding-bottom:40px}
 .lg[lang=te]{font-family:'Noto Sans Telugu','Inter',system-ui,sans-serif;line-height:1.95}
-@media(prefers-color-scheme:dark){.lg{--bg:#0b1120;--card:#111a2e;--text:#e2e8f0;--muted:#94a3b8;--line:#1e2a44;--brand:#60a5fa;--soft:#14213d;--warn:#2a1318;--warnline:#5b2430;--tlbg:#3a2f0b;--tltext:#fde68a;--tlline:#78650f}}
+@media(prefers-color-scheme:dark){.lg{--bg:#070b16;--card:rgba(22,32,56,.5);--text:#e2e8f0;--muted:#9fb0c8;--line:rgba(255,255,255,.14);--sep:rgba(255,255,255,.1);--brand:#7db3ff;--soft:rgba(96,165,250,.14);--warn:rgba(248,113,113,.12);--warnline:rgba(248,113,113,.4);--tlbg:rgba(250,204,21,.16);--tltext:#fde68a;--tlline:rgba(250,204,21,.4);--shadow:0 10px 32px rgba(0,0,0,.45);--hi:inset 0 1px 0 rgba(255,255,255,.14)}}
 .lg *{box-sizing:border-box}
-.lg header{background:#0f172a;height:56px;padding:0 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center}
+.lg .bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(42% 34% at 12% 8%,rgba(59,130,246,.38),transparent 70%),radial-gradient(36% 30% at 92% 22%,rgba(219,39,119,.26),transparent 70%),radial-gradient(42% 34% at 85% 88%,rgba(22,163,74,.26),transparent 70%),radial-gradient(36% 30% at 8% 82%,rgba(217,119,6,.3),transparent 70%)}
+.lg .hero,.lg .tl,.lg .pick,.lg .scroll,.lg article,.lg .note,.lg .warn,.lg .tags div,.lg .contact,.lg .founder,.lg .card{-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid var(--line);box-shadow:var(--shadow),var(--hi)}
+.lg header{background:rgba(15,23,42,.72);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid rgba(255,255,255,.12);height:56px;padding:0 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center}
 .lg .bar{width:100%;max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .lg .btn{display:flex;align-items:center;gap:6px;background:transparent;border:0;color:#cbd5e1;cursor:pointer;font-weight:600;font-size:14px;padding:6px 0;font-family:inherit}
-.lg .btn.pill{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:20px;padding:6px 12px}
+.lg .btn.pill{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;border-radius:20px;padding:6px 12px}
 .lg .brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:16px;font-weight:800;letter-spacing:.5px;margin:0}
-.lg main{max-width:820px;margin:0 auto;padding:0 16px}
-.lg .hero{margin-top:16px;padding:28px 22px;border-radius:16px;color:#fff;background:linear-gradient(135deg,#0f172a,#1e3a8a)}
-.lg h2{font-size:clamp(24px,5.5vw,34px);line-height:1.25;margin:0 0 8px}
-.lg .sub{color:#cbd5e1;margin:0;font-size:14px}
-.lg .tl{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--tlbg);color:var(--tltext);border:1px solid var(--tlline);border-radius:12px;padding:12px 14px;margin-top:14px;font-weight:600}
-.lg .tl button{background:#0f172a;color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit}
-.lg .pick{position:sticky;top:56px;z-index:90;background:var(--bg);padding:12px 0 10px;margin-top:6px}
+.lg main{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:0 16px}
+.lg .hero{position:relative;overflow:hidden;margin-top:16px;padding:30px 22px;border-radius:24px;color:#fff;background:linear-gradient(135deg,rgba(15,23,42,.86),rgba(30,58,138,.72));border-color:rgba(255,255,255,.28)}
+.lg .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.24),transparent 42%);pointer-events:none}
+.lg h2{position:relative;z-index:1;font-size:clamp(24px,5.5vw,34px);line-height:1.25;margin:0 0 8px}
+.lg .sub{position:relative;z-index:1;color:#dbe4f3;margin:0;font-size:14px}
+.lg .tl{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--tlbg);color:var(--tltext);border-color:var(--tlline);border-radius:18px;padding:12px 14px;margin-top:14px;font-weight:600}
+.lg .tl button{background:#0f172a;color:#fff;border:0;border-radius:12px;padding:9px 16px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit}
+.lg .pick{position:sticky;top:64px;z-index:90;background:var(--card);border-radius:20px;padding:12px 14px 10px;margin-top:12px}
 .lg .pick p{margin:0 0 8px;font-size:13px;color:var(--muted)}
 .lg .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .lg .chip{flex:none;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:22px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .lg .chip i{width:10px;height:10px;border-radius:50%;background:var(--c)}
-.lg .chip.on{background:var(--c);border-color:var(--c);color:#fff}
+.lg .chip.on{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 6px 18px color-mix(in srgb,var(--c) 45%,transparent)}
 .lg .chip.on i{background:#fff}
-.lg section,.lg article{scroll-margin-top:140px}
+.lg section,.lg article{scroll-margin-top:170px}
 .lg h3{display:flex;align-items:center;gap:8px;font-size:20px;margin:34px 0 10px}
 .lg p{margin:0 0 12px}
-.lg .note{background:var(--soft);border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;margin-top:12px}
-.lg .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.lg .note{background:var(--soft);border-left:4px solid var(--brand);border-radius:16px;padding:12px 14px;margin-top:12px}
+.lg .founder{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:20px;padding:14px 16px;margin-top:14px}
+.lg .av{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:20px;background:linear-gradient(135deg,#2563eb,#db2777)}
+.lg .founder span{display:block;font-size:13px;color:var(--muted)}
+.lg .founder strong{display:block;font-size:17px}
+.lg .founder em{font-style:normal;color:var(--brand);font-weight:600;font-size:14px}
+.lg .card{background:var(--card);border-radius:20px;padding:16px 18px 6px}
+.lg .scroll{overflow-x:auto;background:var(--card);border-radius:20px}
 .lg table{border-collapse:collapse;width:100%;min-width:480px;font-size:14px}
-.lg th,.lg td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.lg th,.lg td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--sep);vertical-align:top}
 .lg th{color:var(--muted);font-weight:600}
 .lg tr:last-child td{border-bottom:0}
-.lg tr.on td{background:color-mix(in srgb,var(--c) 14%,transparent)}
+.lg tr.on td{background:color-mix(in srgb,var(--c) 16%,transparent)}
 .lg td button{background:none;border:0;padding:0;color:var(--brand);font-weight:600;cursor:pointer;text-align:left;font-family:inherit;font-size:inherit}
-.lg article{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:18px 18px 8px;margin-bottom:16px;transition:box-shadow .25s,background .25s}
-.lg article.on{background:color-mix(in srgb,var(--c) 7%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 40%,transparent);animation:pulse .9s ease-out 1}
+.lg article{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 16%,transparent),transparent 60%),var(--card);border-radius:22px;padding:18px 18px 8px;margin-bottom:16px;transition:box-shadow .25s}
+.lg article.on{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 26%,transparent),transparent 65%),var(--card);border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 40%,transparent),var(--shadow);animation:pulse .9s ease-out 1}
 @keyframes pulse{from{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent)}to{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 40%,transparent)}}
 @media(prefers-reduced-motion:reduce){.lg article.on{animation:none}.lg *{scroll-behavior:auto}}
 .lg .ah{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lg .ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 20%,transparent);box-shadow:var(--hi)}
 .lg .ah h4{margin:0;font-size:18px}
 .lg .badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:12px;background:#dcfce7;color:#166534}
 .lg .badge.beta{background:#fef3c7;color:#92400e}
-.lg .url{display:inline-block;color:var(--muted);font-size:13px;margin:2px 0 10px;text-decoration:none}
+.lg .url{display:inline-block;color:var(--muted);font-size:13px;margin:6px 0 10px;text-decoration:none}
 .lg ul{padding-left:20px;margin:0 0 10px}
 .lg li{margin-bottom:8px}
-.lg .warn{background:var(--warn);border:1px solid var(--warnline);border-radius:12px;padding:18px 18px 8px;margin-top:34px}
+.lg .warn{background:var(--warn);border-color:var(--warnline);border-radius:20px;padding:18px 18px 8px;margin-top:34px}
 .lg .warn h3{margin-top:0}
 .lg .tags{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:12px 0 20px}
-.lg .tags div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.lg .tags div{background:var(--card);border-radius:16px;padding:10px 14px}
 .lg .tags span{display:block;color:var(--muted);font-size:13px}
-.lg .contact{text-align:center;margin-top:40px;padding:28px 16px;background:var(--soft);border-radius:16px}
+.lg .contact{text-align:center;margin-top:40px;padding:28px 16px;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(219,39,119,.14)),var(--card);border-radius:24px}
 .lg .contact h3{justify-content:center;margin:0 0 14px}
-.lg .cta{display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:700;cursor:pointer;font-size:15px;font-family:inherit}
+.lg .cta{display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:700;cursor:pointer;font-size:15px;font-family:inherit;box-shadow:0 8px 20px rgba(37,99,235,.35)}
 .lg button:focus-visible,.lg a:focus-visible{outline:3px solid #facc15;outline-offset:2px}
 .lg footer{text-align:center;color:var(--muted);font-size:13px;margin-top:28px}
-@media print{.lg header,.lg .pick,.lg .tl,.lg .contact{display:none}.lg{background:#fff}}
+.lg footer p{margin:0 0 4px}
+@media print{.lg header,.lg .pick,.lg .tl,.lg .contact,.lg .bg{display:none}.lg{background:#fff}}
 `;
 
 const LegalPolicy = () => {
@@ -198,6 +225,7 @@ const LegalPolicy = () => {
     return (
         <div className="lg" lang={lang}>
             <style>{css}</style>
+            <div className="bg" />
 
             <header>
                 <div className="bar">
@@ -233,6 +261,15 @@ const LegalPolicy = () => {
                     <h3><Info size={20} color="#2563eb" /> {t.introTitle}</h3>
                     <p>{t.introText}</p>
                     <div className="note"><strong>{t.status[0]}:</strong> {t.status[1]}</div>
+                    <div className="founder">
+                        <div className="av">{FOUNDER[0]}</div>
+                        <div><span>{t.founderText}</span><strong>{FOUNDER}</strong><em>{t.founderRole}</em></div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3><Lock size={20} color="#2563eb" /> {t.safeTitle}</h3>
+                    <div className="card"><ul>{t.safe.map(([b, x]) => <li key={b}><strong>{b}:</strong> {x}</li>)}</ul></div>
                 </section>
 
                 <section>
@@ -260,7 +297,7 @@ const LegalPolicy = () => {
                         return (
                             <article key={m.id} id={m.id} className={active === m.id ? 'on' : ''} style={{ '--c': m.color }}>
                                 <div className="ah">
-                                    <Icon size={24} color={m.color} />
+                                    <span className="ic"><Icon size={22} color={m.color} /></span>
                                     <h4>{m.name}</h4>
                                     <span className={`badge${m.beta ? ' beta' : ''}`}>{m.beta ? t.beta : t.live}</span>
                                 </div>
@@ -296,7 +333,7 @@ const LegalPolicy = () => {
                     <button className="cta" onClick={() => navigate('/#contact')}><MessageSquare size={18} /> {t.contactBtn}</button>
                 </section>
 
-                <footer><p>{t.footer}</p></footer>
+                <footer><p>{t.footer}</p><p>{t.founderRole}: {FOUNDER}</p></footer>
             </main>
         </div>
     );
