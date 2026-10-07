@@ -1,300 +1,262 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, Globe, Printer, PieChart, Store, AlertTriangle, Lock, Server, Info, ArrowLeft, Languages, MessageSquare } from 'lucide-react';
+import { ShieldCheck, Globe, Printer, PieChart, Store, AlertTriangle, Server, Info, ArrowLeft, Languages, MessageSquare, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+// ✏️ Edit these in ONE place. Anything in [square brackets] below also needs your real details.
+const CONFIG = {
+    updated: 'October 2026',
+    email: 'privacy@subhamsnetworks.in',   // TODO: your real contact email
+    owner: '[Owner / business name]',      // TODO
+    place: '[City, State, India]',         // TODO
+};
+
+// Add a `te` object here later (same keys as `en`). The language button appears only when it exists.
+const content = {
+    en: {
+        back: 'Back',
+        title: 'Privacy Policy & Terms of Service',
+        subtitle: `Last updated: ${CONFIG.updated} · Applies to all Subhams apps`,
+        introTitle: 'Introduction',
+        introText: 'This page covers every Subhams Networks app. We aim to collect as little data as possible and to keep it secure. By using our apps, you agree to these terms.',
+        introBox: ['Status', 'Subhams Agent and PMMS are live. Subhams Hub is still in development, so expect frequent updates and changes while we improve the local marketplace.'],
+        glanceTitle: 'At a glance',
+        glanceHead: ['App', 'Login', 'Data we receive', 'How long we keep it'],
+        appsTitle: 'Rules for each app',
+        banTitle: 'Cross-app rules and account blocking',
+        banText: 'Our apps share one account system. If you commit fraud or break the rules in any one app, we may block you in all of them, including future services.',
+        banList: [
+            ['What we link', 'To enforce a block across apps, we match accounts by the email address you signed in with.'],
+            ['Appeals', `If you think a block is a mistake, email ${CONFIG.email} and we will review it.`],
+        ],
+        infraTitle: 'Third-party services',
+        infraText: 'We use these providers to run our apps. They process data for us under their own privacy policies:',
+        providers: [
+            ['Google', 'Sign-in'],
+            ['MongoDB, Neon DB', 'Database'],
+            ['Render, Vercel', 'Hosting'],
+            ['Brevo', 'Emails'],
+        ],
+        liabilityTitle: 'Limitation of liability and device security',
+        liabilityText1: 'We protect our servers with industry-standard security. We cannot control your own device. If your phone, email or accounts are compromised by unknown files, malicious apps or hacks you installed, we are not responsible, to the extent permitted by law.',
+        liabilityText2: 'We choose our providers carefully, but we cannot control outages or breaches at those providers. To the extent permitted by law, we are not liable for losses that originate there.',
+        rightsTitle: 'Your rights, cookies and contact',
+        rights: [
+            ['Access, correction and deletion', `Email ${CONFIG.email} and we will respond within [number] days.`],
+            ['Cookies and local storage', 'We use browser storage only to keep you signed in and to remember the temporary name you enter in Agent.'],
+            ['Children', 'Our apps are not meant for children under [age].'],
+            ['Changes', 'When we change this page, we update the date at the top.'],
+            ['Governing law', 'These terms are governed by the laws of India.'],
+            ['Operator', `${CONFIG.owner}, ${CONFIG.place}`],
+        ],
+        contactTitle: 'Questions about your privacy?',
+        contactBtn: 'Message Administrator',
+        footer: '© 2026 Subhams Networks. All rights reserved.',
+    },
+};
+
+const apps = [
+    {
+        id: 'site', icon: Globe, color: '#3b82f6', name: 'Subhams Networks', url: 'subhamsnetworks.in', status: 'Live',
+        login: 'None', data: 'Messages you send in the contact chat', keep: '[add period]',
+        points: [
+            ['No accounts', 'The main site needs no sign-up, no Google login and no account.'],
+            ['No analytics or ad trackers', 'We do not run analytics or advertising trackers. Our hosting providers may log technical data such as your IP address.'],
+            ['Contact chat', 'Messages you send are delivered to the Administrator and used only to reply to you.'],
+        ],
+    },
+    {
+        id: 'agent', icon: Printer, color: '#d97706', name: 'Subhams Secure Agent', url: 'agent.subhamsnetworks.in', status: 'Live',
+        login: 'Customers: none. Shops: Email or Google', data: 'Job ID; shop account and ID documents', keep: 'Customer files: removed within 10 minutes. Shop ID: [add period]',
+        points: [
+            ['Customers', 'No sign-up or phone permission. The temporary name you enter stays only on your device.'],
+            ['Uploads', 'Documents and photos are encrypted in transit and sent to the shop. Our servers do not store your files; our database only records a Job ID.'],
+            ['10-minute auto-delete', "Files are deleted from the shop's queue within 10 minutes, whether printed or not."],
+            ['Shops', 'Owners register with Email or Google and upload [type of ID document]. We use it only to [verify the shop]. It is seen by [who], kept for [how long], and deleted when [condition].'],
+            ['Shop violations', 'Breaking the printing rules leads to permanent removal.'],
+        ],
+    },
+    {
+        id: 'pmms', icon: PieChart, color: '#16a34a', name: 'Subhams PMMS', url: 'pmms.subhamsnetworks.in', status: 'Live',
+        login: 'Email or Google', data: 'Only the numbers you enter yourself', keep: 'Until you delete your account [confirm]',
+        points: [
+            ['Your data stays yours', 'We do not sell your financial data or share it with anyone, apart from the providers listed below that store it for us.'],
+            ['Manual entry only', 'PMMS processes only the figures you type in. It does not connect to your bank.'],
+            ['Sign-in', 'Accounts use Email or Google login.'],
+        ],
+    },
+    {
+        id: 'hub', icon: Store, color: '#db2777', name: 'Subhams Hub', url: 'hub.subhamsnetworks.in', status: 'Beta',
+        login: 'Google', data: 'Name and email from Google; your location while you use the app', keep: '[add period]',
+        points: [
+            ['Location', 'We ask for your location only to show nearby active shops. We do not track it in the background after you close the app, and we do not build profiles from your movements.'],
+            ['Sign-in', 'You log in with Google. We receive your basic profile details (name, email) and use them only to run your account. [confirm exact details]'],
+            ['Languages', 'Available in English and Telugu.'],
+        ],
+    },
+];
+
+const css = `
+.lg{--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#64748b;--line:#e2e8f0;--brand:#2563eb;--soft:#eff6ff;--warn:#fef2f2;--warnline:#fecaca;
+background:var(--bg);color:var(--text);min-height:100vh;font-family:'Inter',system-ui,sans-serif;line-height:1.7;padding-bottom:40px}
+@media(prefers-color-scheme:dark){.lg{--bg:#0b1120;--card:#111a2e;--text:#e2e8f0;--muted:#94a3b8;--line:#1e2a44;--brand:#60a5fa;--soft:#14213d;--warn:#2a1318;--warnline:#5b2430}}
+.lg *{box-sizing:border-box}
+.lg header{background:#0f172a;padding:12px 16px;position:sticky;top:0;z-index:100}
+.lg .bar{max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lg .btn{display:flex;align-items:center;gap:6px;background:transparent;border:0;color:#cbd5e1;cursor:pointer;font-weight:600;font-size:14px;padding:6px 0}
+.lg .btn.pill{border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:20px;padding:6px 12px}
+.lg .brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:16px;font-weight:800;letter-spacing:.5px;margin:0}
+.lg main{max-width:820px;margin:0 auto;padding:0 16px}
+.lg .hero{padding:32px 0 8px}
+.lg h2{font-size:clamp(24px,5vw,34px);line-height:1.2;margin:0 0 8px}
+.lg .sub{color:var(--muted);margin:0;font-size:14px}
+.lg nav.toc{display:flex;gap:8px;overflow-x:auto;padding:16px 0;scrollbar-width:none}
+.lg nav.toc a{white-space:nowrap;color:var(--brand);border:1px solid var(--line);background:var(--card);border-radius:20px;padding:4px 12px;font-size:13px;text-decoration:none}
+.lg section,.lg article{scroll-margin-top:72px}
+.lg h3{display:flex;align-items:center;gap:8px;font-size:20px;margin:36px 0 10px}
+.lg p{margin:0 0 12px}
+.lg .note{background:var(--soft);border-left:4px solid var(--brand);border-radius:8px;padding:12px 14px;margin-top:12px}
+.lg .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.lg table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+.lg th,.lg td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.lg th{color:var(--muted);font-weight:600}
+.lg tr:last-child td{border-bottom:0}
+.lg article{background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:12px;padding:18px 18px 8px;margin-bottom:16px}
+.lg .ah{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lg .ah h4{margin:0;font-size:18px}
+.lg .badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:12px;background:#dcfce7;color:#166534}
+.lg .badge.beta{background:#fef3c7;color:#92400e}
+.lg .url{display:inline-block;color:var(--muted);font-size:13px;margin:2px 0 10px;text-decoration:none}
+.lg ul{padding-left:20px;margin:0 0 10px}
+.lg li{margin-bottom:8px}
+.lg .warn{background:var(--warn);border:1px solid var(--warnline);border-radius:12px;padding:18px 18px 8px;margin-top:36px}
+.lg .warn h3{margin-top:0}
+.lg .tags{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:12px 0 20px}
+.lg .tags div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.lg .tags span{display:block;color:var(--muted);font-size:13px}
+.lg .contact{text-align:center;margin-top:40px;padding:28px 16px;background:var(--soft);border-radius:16px}
+.lg .contact h3{justify-content:center;margin:0 0 12px}
+.lg .contact a.mail{display:inline-flex;align-items:center;gap:6px;color:var(--brand);margin:0 0 14px;font-weight:600}
+.lg .cta{display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;border:0;border-radius:10px;padding:12px 20px;font-weight:700;cursor:pointer;font-size:15px}
+.lg .cta:focus-visible,.lg .btn:focus-visible,.lg nav a:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+.lg footer{text-align:center;color:var(--muted);font-size:13px;margin-top:28px}
+@media print{.lg header,.lg nav.toc,.lg .contact{display:none}.lg{background:#fff}}
+`;
 
 const LegalPolicy = () => {
     const [lang, setLang] = useState('en');
     const navigate = useNavigate();
+    const t = content[lang] || content.en;
+    const hasOtherLang = Object.keys(content).length > 1;
 
+    // Jump to #agent, #pmms, #hub... when opened from another app; otherwise start at the top
     useEffect(() => {
-        window.scrollTo(0, 0);
+        const id = window.location.hash.slice(1);
+        const el = id && document.getElementById(id);
+        if (el) el.scrollIntoView();
+        else window.scrollTo(0, 0);
     }, []);
 
-    const content = {
-        en: {
-            back: "Back",
-            title: "Subhams Networks Privacy Policy & Terms of Service",
-            subtitle: "Effective Date: October 2026 | Applies to the entire Subhams Ecosystem",
-            introTitle: "1. Introduction",
-            introText: "Welcome to the Subhams Networks Ecosystem. Our ultimate goal is to give users the fastest performance and the best possible output. We believe in strict data privacy, minimal data collection, and highly secure local commerce. By using our platforms, you agree to the terms outlined below.",
-            introBox: "Continuous Improvement: We continuously build security patches, fix bugs, and push updates across all our systems to ensure your safety. While Subhams Agent and PMMS are running flawlessly in production, please note that Subhams Hub is currently in an active developing stage, and you may experience frequent updates as we refine the local marketplace experience.",
-            platformTitle: "2. Platform-Specific Privacy Rules",
-            netTitle: "Subhams Networks",
-            netList: [
-                "No Accounts Required: The main informational site requires no sign-ups, no Google login, and no user accounts.",
-                "No Data Collection: We do not collect or track personal visitor data.",
-                "Contact Mechanism: The local web chat is used exclusively to send direct messages to the Administrator. Any information shared here is strictly for communication and is not stored."
-            ],
-            agentTitle: "Subhams Secure Agent",
-            agentSub: "Strict 'Zero-Retention' Architecture:",
-            agentList: [
-                "For Customers: No sign-ups or phone permissions required. The temporary 'Name' you enter is held only locally on your device.",
-                "High-Security Uploads: Documents and photos are heavily encrypted and sent directly to the Shop. Our servers do not store your files; the DB only receives a 'Job ID'.",
-                "10-Minute Auto-Delete: Your files are automatically and permanently deleted from the Shop's queue after exactly 10 minutes, printed or not.",
-                "For Shops: Owners must register via Email/Google and upload ID documents. Violating printing rules results in permanent deletion."
-            ],
-            pmmsTitle: "Subhams PMMS",
-            pmmsList: [
-                "Absolute Privacy: We do not send, share, or sell your financial data to anyone.",
-                "Manual Entry Only: PMMS is a highly secure, closed-loop system processing only the specific numbers you manually input.",
-                "Secure Access: Accounts are strictly protected via standard Email or Google Login authentication."
-            ],
-            hubTitle: "Subhams Hub",
-            hubList: [
-                "Localized Tracking Only: We request location solely to show nearby active shops. We do not track your location in the background after the app is closed. We do not build profiles based on your physical movements.",
-                "Authentication: Users log in easily via Google. The platform natively supports both English and Telugu."
-            ],
-            crossTitle: "3. Cross-Ecosystem Security & Violation Rules",
-            crossText: "To maintain a safe, fast, and high-quality environment for everyone, we enforce a strict Cross-Ecosystem Security Policy:",
-            crossList: [
-                "The Global Ban Rule: The Subhams Ecosystem is interconnected. If we find that you have committed a violation, engaged in fraud, or broken the rules on any single application, you will be blocked and permanently removed across the entire ecosystem. You will not be able to use Subhams Hub, Agent, PMMS, or any future services.",
-                "No Exceptions: We prioritize the safety of our legitimate users and vendors. Rule-breakers are removed instantly to preserve platform integrity."
-            ],
-            infraTitle: "4. Third-Party Infrastructure & Liability Disclaimer",
-            infraText: "To provide high-speed, secure, and reliable services, the Subhams Ecosystem is built using industry-leading third-party platforms:",
-            liabilityTitle: "Limitation of Liability & Device Security",
-            liabilityText1: "While Subhams Networks implements rigorous, state-of-the-art security measures on our servers, we are not responsible for the security of your personal device. If you install unknown files, malicious third-party apps, or hacks on your phone that result in your device, email, or accounts being compromised, Subhams Networks holds zero responsibility or liability.",
-            liabilityText2: "Furthermore, by using our applications, you acknowledge that Subhams Networks is not legally or financially liable for upstream security breaches, server outages, or data leaks originating from the third-party infrastructure providers listed above.",
-            contactTitle: "Have Questions About Your Privacy?",
-            contactBtn: "Message Administrator",
-            footer: "© 2026 Subhams Networks. All rights reserved."
-        },
-        te: {
-            back: "వెనుకకు",
-            title: "సుభమ్స్ నెట్‌వర్క్స్ గోప్యతా విధానం & సేవా నిబంధనలు",
-            subtitle: "ప్రభావ తేదీ: అక్టోబర్ 2026 | మొత్తం సుభమ్స్ ఎకోసిస్టమ్‌కు వర్తిస్తుంది",
-            introTitle: "1. పరిచయం",
-            introText: "సుభమ్స్ నెట్‌వర్క్స్ ఎకోసిస్టమ్‌కు స్వాగతం. వినియోగదారులకు వేగవంతమైన పనితీరును మరియు ఉత్తమమైన అవుట్‌పుట్‌ను అందించడమే మా అంతిమ లక్ష్యం. మేము కఠినమైన డేటా గోప్యత, కనిష్ట డేటా సేకరణ మరియు అత్యంత సురక్షితమైన స్థానిక వాణిజ్యాన్ని విశ్వసిస్తాము. మా ప్లాట్‌ఫారమ్‌లను ఉపయోగించడం ద్వారా, మీరు దిగువ పేర్కొన్న నిబంధనలకు అంగీకరిస్తున్నారు.",
-            introBox: "నిరంతర అభివృద్ధి: మీ భద్రతను నిర్ధారించడానికి మేము నిరంతరం భద్రతా ప్యాచ్‌లను నిర్మిస్తాము, బగ్‌లను పరిష్కరిస్తాము మరియు మా అన్ని సిస్టమ్‌లలో అప్‌డేట్‌లను పంపుతాము. సుభమ్స్ ఏజెంట్ మరియు PMMS ఉత్పత్తిలో దోషరహితంగా రన్ అవుతున్నప్పటికీ, సుభమ్స్ హబ్ ప్రస్తుతం చురుకైన అభివృద్ధి దశలో ఉందని దయచేసి గమనించండి మరియు మేము స్థానిక మార్కెట్‌ప్లేస్ అనుభవాన్ని మెరుగుపరుస్తున్నందున మీరు తరచుగా అప్‌డేట్‌లను అనుభవించవచ్చు.",
-            platformTitle: "2. ప్లాట్‌ఫారమ్-నిర్దిష్ట గోప్యతా నియమాలు",
-            netTitle: "సుభమ్స్ నెట్‌వర్క్స్",
-            netList: [
-                "ఖాతాలు అవసరం లేదు: ప్రధాన సమాచార సైట్‌కు సైన్-అప్‌లు, Google లాగిన్ మరియు వినియోగదారు ఖాతాలు అవసరం లేదు.",
-                "డేటా సేకరణ లేదు: మేము వ్యక్తిగత సందర్శకుల డేటాను సేకరించము లేదా ట్రాక్ చేయము.",
-                "సంప్రదింపు యంత్రాంగం: స్థానిక వెబ్ చాట్ అడ్మినిస్ట్రేటర్‌కు నేరుగా సందేశాలను పంపడానికి ప్రత్యేకంగా ఉపయోగించబడుతుంది. ఇక్కడ భాగస్వామ్యం చేయబడిన ఏదైనా సమాచారం ఖచ్చితంగా కమ్యూనికేషన్ కోసం మాత్రమే మరియు నిల్వ చేయబడదు."
-            ],
-            agentTitle: "సుభమ్స్ సెక్యూర్ ఏజెంట్",
-            agentSub: "కఠినమైన 'జీరో-రిటెన్షన్' ఆర్కిటెక్చర్:",
-            agentList: [
-                "కస్టమర్ల కోసం: సైన్-అప్‌లు లేదా ఫోన్ అనుమతులు అవసరం లేదు. మీరు నమోదు చేసే తాత్కాలిక 'పేరు' మీ పరికరంలో స్థానికంగా మాత్రమే ఉంచబడుతుంది.",
-                "హై-సెక్యూరిటీ అప్‌లోడ్‌లు: పత్రాలు మరియు ఫోటోలు భారీగా గుప్తీకరించబడతాయి మరియు నేరుగా షాప్‌కి పంపబడతాయి. మా సర్వర్లు మీ ఫైల్‌లను నిల్వ చేయవు; DB కేవలం 'జాబ్ ID'ని మాత్రమే స్వీకరిస్తుంది.",
-                "10-నిమిషాల స్వీయ-తొలగింపు: మీ ఫైల్‌లు సరిగ్గా 10 నిమిషాల తర్వాత షాప్ క్యూ నుండి స్వయంచాలకంగా మరియు శాశ్వతంగా తొలగించబడతాయి, ప్రింట్ చేయబడినా లేదా చేయకపోయినా.",
-                "షాపుల కోసం: యజమానులు ఇమెయిల్/Google ద్వారా నమోదు చేసుకోవాలి మరియు ID పత్రాలను అప్‌లోడ్ చేయాలి. ప్రింటింగ్ నియమాలను ఉల్లంఘిస్తే శాశ్వతంగా తొలగించబడుతుంది."
-            ],
-            pmmsTitle: "సుభమ్స్ PMMS",
-            pmmsList: [
-                "సంపూర్ణ గోప్యత: మేము మీ ఆర్థిక డేటాను ఎవరికీ పంపము, భాగస్వామ్యం చేయము లేదా విక్రయించము.",
-                "మాన్యువల్ ఎంట్రీ మాత్రమే: PMMS అనేది మీరు మాన్యువల్‌గా ఇన్‌పుట్ చేసే నిర్దిష్ట సంఖ్యలను మాత్రమే ప్రాసెస్ చేసే అత్యంత సురక్షితమైన, క్లోజ్డ్-లూప్ సిస్టమ్.",
-                "సురక్షిత యాక్సెస్: ఖాతాలు ప్రామాణిక ఇమెయిల్ లేదా Google లాగిన్ ప్రమాణీకరణ ద్వారా ఖచ్చితంగా రక్షించబడతాయి."
-            ],
-            hubTitle: "సుభమ్స్ హబ్",
-            hubList: [
-                "స్థానికీకరించిన ట్రాకింగ్ మాత్రమే: సమీపంలోని యాక్టివ్ షాపులను చూపించడానికి మాత్రమే మేము స్థానాన్ని అభ్యర్థిస్తాము. యాప్ మూసివేయబడిన తర్వాత మేము నేపథ్యంలో మీ స్థానాన్ని ట్రాక్ చేయము. మేము మీ భౌతిక కదలికల ఆధారంగా ప్రొఫైల్‌లను నిర్మించము.",
-                "ప్రామాణీకరణ: వినియోగదారులు Google ద్వారా సులభంగా లాగిన్ చేయవచ్చు. ప్లాట్‌ఫారమ్ స్థానికంగా ఇంగ్లీష్ మరియు తెలుగు రెండింటికీ మద్దతు ఇస్తుంది."
-            ],
-            crossTitle: "3. క్రాస్-ఎకోసిస్టమ్ సెక్యూరిటీ & ఉల్లంఘన నియమాలు",
-            crossText: "అందరికీ సురక్షితమైన, వేగవంతమైన మరియు అధిక-నాణ్యత వాతావరణాన్ని నిర్వహించడానికి, మేము కఠినమైన క్రాస్-ఎకోసిస్టమ్ సెక్యూరిటీ విధానాన్ని అమలు చేస్తాము:",
-            crossList: [
-                "గ్లోబల్ బాన్ రూల్: సుభమ్స్ ఎకోసిస్టమ్ ఒకదానికొకటి అనుసంధానించబడి ఉంది. మీరు ఉల్లంఘనకు పాల్పడినట్లు, మోసానికి పాల్పడినట్లు లేదా ఏదైనా ఒక్క అప్లికేషన్‌లో నిబంధనలను ఉల్లంఘించినట్లు మేము గుర్తిస్తే, మీరు బ్లాక్ చేయబడతారు మరియు మొత్తం పర్యావరణ వ్యవస్థ అంతటా శాశ్వతంగా తీసివేయబడతారు. మీరు సుభమ్స్ హబ్, ఏజెంట్, PMMS లేదా భవిష్యత్తులో ఎలాంటి సేవలను ఉపయోగించలేరు.",
-                "మినహాయింపులు లేవు: మేము మా చట్టబద్ధమైన వినియోగదారులు మరియు విక్రేతల భద్రతకు ప్రాధాన్యతనిస్తాము. ప్లాట్‌ఫారమ్ సమగ్రతను కాపాడేందుకు నిబంధనలను ఉల్లంఘించే వారు తక్షణమే తొలగించబడతారు."
-            ],
-            infraTitle: "4. థర్డ్-పార్టీ ఇన్‌ఫ్రాస్ట్రక్చర్ & లయబిలిటీ డిస్‌క్లైమర్",
-            infraText: "హై-స్పీడ్, సురక్షితమైన మరియు విశ్వసనీయమైన సేవలను అందించడానికి, పరిశ్రమలో ప్రముఖమైన థర్డ్-పార్టీ ప్లాట్‌ఫారమ్‌లను ఉపయోగించి సుభమ్స్ ఎకోసిస్టమ్ నిర్మించబడింది:",
-            liabilityTitle: "బాధ్యత పరిమితి & పరికర భద్రత",
-            liabilityText1: "సుభమ్స్ నెట్‌వర్క్‌లు మా సర్వర్‌లపై కఠినమైన, అత్యాధునిక భద్రతా చర్యలను అమలు చేస్తున్నప్పటికీ, మీ వ్యక్తిగత పరికరం యొక్క భద్రతకు మేము బాధ్యత వహించము. మీరు తెలియని ఫైల్‌లు, హానికరమైన థర్డ్-పార్టీ యాప్‌లు లేదా మీ పరికరం, ఇమెయిల్ లేదా ఖాతాలు రాజీపడేలా మీ ఫోన్‌లో హ్యాక్‌లను ఇన్‌స్టాల్ చేస్తే, సుభమ్స్ నెట్‌వర్క్‌లు సున్నా బాధ్యత వహిస్తాయి.",
-            liabilityText2: "అంతేకాకుండా, మా అప్లికేషన్‌లను ఉపయోగించడం ద్వారా, పైన జాబితా చేయబడిన థర్డ్-పార్టీ ఇన్‌ఫ్రాస్ట్రక్చర్ ప్రొవైడర్ల నుండి ఉత్పన్నమయ్యే అప్‌స్ట్రీమ్ భద్రతా ఉల్లంఘనలు, సర్వర్ అంతరాయాలు లేదా డేటా లీక్‌లకు సుభమ్స్ నెట్‌వర్క్‌లు చట్టబద్ధంగా లేదా ఆర్థికంగా బాధ్యత వహించవని మీరు అంగీకరిస్తున్నారు.",
-            contactTitle: "మీ గోప్యత గురించి సందేహాలు ఉన్నాయా?",
-            contactBtn: "అడ్మినిస్ట్రేటర్‌కు సందేశం పంపండి",
-            footer: "© 2026 సుభమ్స్ నెట్‌వర్క్‌లు. అన్ని హక్కులు ప్రత్యేకించబడినవి."
-        }
-    };
+    const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/'));
 
-    const t = content[lang];
+    const toc = [['glance', 'At a glance'], ...apps.map(a => [a.id, a.name.replace('Subhams ', '')]), ['rules', 'Blocking'], ['providers', 'Providers'], ['rights', 'Your rights']];
 
     return (
-        <div style={styles.page}>
-            <div style={styles.header}>
-                <div style={styles.headerContent}>
-                    <button style={styles.backBtn} onClick={() => window.history.back()}>
-                        <ArrowLeft size={18} /> {t.back}
-                    </button>
-                    <div style={styles.brandTitle}>
-                        <ShieldCheck size={28} color="#facc15" />
-                        <h1 style={styles.mainHeading}>SUBHAMS NETWORKS</h1>
-                    </div>
-                    <button 
-                        style={styles.langBtn} 
-                        onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
-                    >
-                        <Languages size={18} /> {lang === 'en' ? 'తెలుగు' : 'English'}
-                    </button>
-                </div>
-            </div>
+        <div className="lg">
+            <style>{css}</style>
 
-            <div style={styles.container}>
-                <div style={styles.titleBanner}>
-                    <h2 style={styles.bannerTitle}>{t.title}</h2>
-                    <p style={styles.bannerSubtitle}>{t.subtitle}</p>
+            <header>
+                <div className="bar">
+                    <button className="btn" onClick={goBack}><ArrowLeft size={18} /> {t.back}</button>
+                    <h1 className="brand"><ShieldCheck size={24} color="#facc15" /> SUBHAMS NETWORKS</h1>
+                    {hasOtherLang
+                        ? <button className="btn pill" onClick={() => setLang(lang === 'en' ? 'te' : 'en')}><Languages size={16} /> {lang === 'en' ? 'తెలుగు' : 'English'}</button>
+                        : <span style={{ width: 60 }} />}
+                </div>
+            </header>
+
+            <main>
+                <div className="hero">
+                    <h2>{t.title}</h2>
+                    <p className="sub">{t.subtitle}</p>
                 </div>
 
-                <section style={styles.section}>
-                    <h3 style={styles.sectionTitle}><Info size={20} color="#2563eb" /> {t.introTitle}</h3>
-                    <p style={styles.text}>{t.introText}</p>
-                    <div style={styles.infoBox}>
-                        {t.introBox.split(':').map((part, i) => (
-                            <React.Fragment key={i}>
-                                {i === 0 ? <strong>{part}:</strong> : part}
-                            </React.Fragment>
-                        ))}
+                <nav className="toc" aria-label="Sections">
+                    {toc.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
+                </nav>
+
+                <section>
+                    <h3><Info size={20} color="#2563eb" /> {t.introTitle}</h3>
+                    <p>{t.introText}</p>
+                    <div className="note"><strong>{t.introBox[0]}:</strong> {t.introBox[1]}</div>
+                </section>
+
+                <section id="glance">
+                    <h3>{t.glanceTitle}</h3>
+                    <div className="scroll">
+                        <table>
+                            <thead><tr>{t.glanceHead.map(h => <th key={h}>{h}</th>)}</tr></thead>
+                            <tbody>
+                                {apps.map(a => (
+                                    <tr key={a.id}>
+                                        <td><a href={`#${a.id}`}>{a.name}</a></td>
+                                        <td>{a.login}</td>
+                                        <td>{a.data}</td>
+                                        <td>{a.keep}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </section>
 
-                <section style={styles.section}>
-                    <h3 style={styles.sectionTitle}><Lock size={20} color="#2563eb" /> {t.platformTitle}</h3>
-                    
-                    <div style={styles.grid}>
-                        <div style={styles.appCard}>
-                            <div style={styles.appCardHeader}>
-                                <Globe size={24} color="#3b82f6" />
-                                <h4 style={styles.appCardTitle}>{t.netTitle}</h4>
-                            </div>
-                            <ul style={styles.list}>
-                                {t.netList.map((item, i) => {
-                                    const [bold, rest] = item.split(': ');
-                                    return <li key={i}><strong>{bold}:</strong> {rest}</li>;
-                                })}
-                            </ul>
-                        </div>
-
-                        <div style={styles.appCard}>
-                            <div style={styles.appCardHeader}>
-                                <Printer size={24} color="#d97706" />
-                                <h4 style={styles.appCardTitle}>{t.agentTitle}</h4>
-                            </div>
-                            <p style={styles.subText}><em>{t.agentSub}</em></p>
-                            <ul style={styles.list}>
-                                {t.agentList.map((item, i) => {
-                                    const [bold, rest] = item.split(': ');
-                                    return <li key={i}><strong>{bold}:</strong> {rest}</li>;
-                                })}
-                            </ul>
-                        </div>
-
-                        <div style={styles.appCard}>
-                            <div style={styles.appCardHeader}>
-                                <PieChart size={24} color="#16a34a" />
-                                <h4 style={styles.appCardTitle}>{t.pmmsTitle}</h4>
-                            </div>
-                            <ul style={styles.list}>
-                                {t.pmmsList.map((item, i) => {
-                                    const [bold, rest] = item.split(': ');
-                                    return <li key={i}><strong>{bold}:</strong> {rest}</li>;
-                                })}
-                            </ul>
-                        </div>
-
-                        <div style={styles.appCard}>
-                            <div style={styles.appCardHeader}>
-                                <Store size={24} color="#db2777" />
-                                <h4 style={styles.appCardTitle}>{t.hubTitle}</h4>
-                            </div>
-                            <ul style={styles.list}>
-                                {t.hubList.map((item, i) => {
-                                    const [bold, rest] = item.split(': ');
-                                    return <li key={i}><strong>{bold}:</strong> {rest}</li>;
-                                })}
-                            </ul>
-                        </div>
-                    </div>
+                <section>
+                    <h3>{t.appsTitle}</h3>
+                    {apps.map(a => {
+                        const Icon = a.icon;
+                        return (
+                            <article key={a.id} id={a.id} style={{ borderLeftColor: a.color }}>
+                                <div className="ah">
+                                    <Icon size={24} color={a.color} />
+                                    <h4>{a.name}</h4>
+                                    <span className={`badge${a.status === 'Beta' ? ' beta' : ''}`}>{a.status}</span>
+                                </div>
+                                <a className="url" href={`https://${a.url}`}>{a.url}</a>
+                                <ul>{a.points.map(([b, x]) => <li key={b}><strong>{b}:</strong> {x}</li>)}</ul>
+                            </article>
+                        );
+                    })}
                 </section>
 
-                <section style={styles.section}>
-                    <div style={styles.warningCard}>
-                        <div style={styles.warningHeader}>
-                            <AlertTriangle size={24} color="#dc2626" />
-                            <h3 style={styles.warningTitle}>{t.crossTitle}</h3>
-                        </div>
-                        <p style={styles.text}>{t.crossText}</p>
-                        <ul style={styles.list}>
-                            {t.crossList.map((item, i) => {
-                                const [bold, rest] = item.split(': ');
-                                return <li key={i}><strong>{bold}:</strong> {rest}</li>;
-                            })}
-                        </ul>
-                    </div>
+                <section id="rules" className="warn">
+                    <h3><AlertTriangle size={22} color="#dc2626" /> {t.banTitle}</h3>
+                    <p>{t.banText}</p>
+                    <ul>{t.banList.map(([b, x]) => <li key={b}><strong>{b}:</strong> {x}</li>)}</ul>
                 </section>
 
-                <section style={styles.section}>
-                    <h3 style={styles.sectionTitle}><Server size={20} color="#2563eb" /> {t.infraTitle}</h3>
-                    <p style={styles.text}>{t.infraText}</p>
-                    <div style={styles.techTags}>
-                        <span style={styles.tag}>Google</span>
-                        <span style={styles.tag}>MongoDB</span>
-                        <span style={styles.tag}>Neon DB</span>
-                        <span style={styles.tag}>Render</span>
-                        <span style={styles.tag}>Vercel</span>
-                        <span style={styles.tag}>Brevo</span>
-                        <span style={styles.tag}>GitHub</span>
-                        <span style={styles.tag}>VS Code</span>
-                    </div>
-                    
-                    <div style={styles.liabilityBox}>
-                        <h4 style={styles.liabilityTitle}>{t.liabilityTitle}</h4>
-                        <p style={styles.text}>{t.liabilityText1}</p>
-                        <p style={styles.text}>{t.liabilityText2}</p>
-                    </div>
+                <section id="providers">
+                    <h3><Server size={20} color="#2563eb" /> {t.infraTitle}</h3>
+                    <p>{t.infraText}</p>
+                    <div className="tags">{t.providers.map(([n, p]) => <div key={n}><strong>{n}</strong><span>{p}</span></div>)}</div>
+                    <h4 style={{ margin: '0 0 6px' }}>{t.liabilityTitle}</h4>
+                    <p>{t.liabilityText1}</p>
+                    <p>{t.liabilityText2}</p>
                 </section>
 
-                {/* 🟢 NEW ROUTING SECTION TO ADMIN CHAT */}
-                <section style={{ textAlign: 'center', marginTop: '50px', padding: '30px', backgroundColor: '#e0e7ff', borderRadius: '16px' }}>
-                    <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '20px' }}>{t.contactTitle}</h3>
-                    <button 
-                        onClick={() => navigate('/#contact')} 
-                        style={styles.contactBtn}
-                    >
-                        <MessageSquare size={18} /> {t.contactBtn}
-                    </button>
+                <section id="rights">
+                    <h3>{t.rightsTitle}</h3>
+                    <ul>{t.rights.map(([b, x]) => <li key={b}><strong>{b}:</strong> {x}</li>)}</ul>
                 </section>
 
-                <footer style={styles.footer}>
-                    <p>{t.footer}</p>
-                </footer>
-            </div>
+                <section className="contact">
+                    <h3>{t.contactTitle}</h3>
+                    <a className="mail" href={`mailto:${CONFIG.email}`}><Mail size={16} /> {CONFIG.email}</a>
+                    <div><button className="cta" onClick={() => navigate('/#contact')}><MessageSquare size={18} /> {t.contactBtn}</button></div>
+                </section>
+
+                <footer><p>{t.footer}</p></footer>
+            </main>
         </div>
     );
-};
-
-const styles = {
-    page: { backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: "'Inter', sans-serif", paddingBottom: '40px' },
-    header: { backgroundColor: '#0f172a', padding: '15px 20px', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
-    headerContent: { maxWidth: '1000px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-    backBtn: { display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'transparent', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontWeight: '600', fontSize: '14px', padding: 0 },
-    brandTitle: { display: 'flex', alignItems: 'center', gap: '8px' },
-    mainHeading: { color: '#ffffff', margin: 0, fontSize: '18px', fontWeight: '900', letterSpacing: '1px' },
-    langBtn: { display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', transition: '0.2s' },
-    container: { maxWidth: '900px', margin: '30px auto', padding: '0 20px' },
-    titleBanner: { backgroundColor: '#ffffff', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', marginBottom: '30px', borderLeft: '6px solid #2563eb' },
-    bannerTitle: { margin: '0 0 10px 0', fontSize: '28px', color: '#0f172a', fontWeight: '900' },
-    bannerSubtitle: { margin: 0, fontSize: '14px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' },
-    section: { marginBottom: '40px' },
-    sectionTitle: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '22px', color: '#1e293b', fontWeight: '800', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '20px' },
-    text: { fontSize: '15px', color: '#475569', lineHeight: '1.6', marginBottom: '15px' },
-    infoBox: { backgroundColor: '#eff6ff', padding: '15px 20px', borderRadius: '10px', border: '1px solid #bfdbfe', fontSize: '14px', color: '#1e3a8a', lineHeight: '1.5' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' },
-    appCard: { backgroundColor: '#ffffff', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' },
-    appCardHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' },
-    appCardTitle: { margin: 0, fontSize: '18px', fontWeight: '800', color: '#0f172a' },
-    subText: { fontSize: '13px', color: '#64748b', margin: '0 0 10px 0', fontWeight: '600' },
-    list: { margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '14px', lineHeight: '1.6' },
-    warningCard: { backgroundColor: '#fef2f2', padding: '25px', borderRadius: '16px', border: '1px solid #fecaca' },
-    warningHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' },
-    warningTitle: { margin: 0, fontSize: '20px', fontWeight: '900', color: '#991b1b' },
-    techTags: { display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' },
-    tag: { backgroundColor: '#f1f5f9', color: '#334155', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', border: '1px solid #cbd5e1' },
-    liabilityBox: { backgroundColor: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' },
-    liabilityTitle: { margin: '0 0 10px 0', fontSize: '16px', fontWeight: '800', color: '#0f172a' },
-    contactBtn: { display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '30px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', transition: 'background-color 0.2s', marginTop: '10px' },
-    footer: { textAlign: 'center', paddingTop: '30px', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '13px', fontWeight: '600' }
 };
 
 export default LegalPolicy;
